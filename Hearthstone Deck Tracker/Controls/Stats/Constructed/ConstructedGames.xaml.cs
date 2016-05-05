@@ -71,7 +71,7 @@ namespace Hearthstone_Deck_Tracker.Controls.Stats.Constructed
 			}
 		}
 
-		private async void ButtonShowReplay_OnClick(object sender, RoutedEventArgs e) => await HsReplayManager.ShowReplay(SelectedGame);
+		private async void ButtonShowReplay_OnClick(object sender, RoutedEventArgs e) => await HsReplayManager.ShowReplay(SelectedGame, true);
 
 		private async void ButtonEdit_OnClick(object sender, RoutedEventArgs e)
 		{
