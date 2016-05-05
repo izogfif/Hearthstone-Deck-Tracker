@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using Hearthstone_Deck_Tracker.Annotations;
+using Hearthstone_Deck_Tracker.HsReplay;
 using Hearthstone_Deck_Tracker.Replay;
 using Hearthstone_Deck_Tracker.Stats;
 using Hearthstone_Deck_Tracker.Stats.CompiledStats;
@@ -70,13 +71,7 @@ namespace Hearthstone_Deck_Tracker.Controls.Stats.Constructed
 			}
 		}
 
-		private void ButtonShowReplay_OnClick(object sender, RoutedEventArgs e)
-		{
-			if(SelectedGame == null)
-				return;
-			if(SelectedGame.HasReplayFile)
-				ReplayReader.LaunchReplayViewer(SelectedGame.ReplayFile);
-		}
+		private async void ButtonShowReplay_OnClick(object sender, RoutedEventArgs e) => await HsReplayManager.ShowReplay(SelectedGame);
 
 		private async void ButtonEdit_OnClick(object sender, RoutedEventArgs e)
 		{
