@@ -2,8 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.HsReplay.API;
+using Hearthstone_Deck_Tracker.HsReplay.Converter;
+using Hearthstone_Deck_Tracker.Replay;
 using Hearthstone_Deck_Tracker.Stats;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 
@@ -13,6 +19,53 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 {
 	internal class HsReplayManager
 	{
+		public static async Task<bool> ShowReplay(GameStats game)
+		{
+			if(game == null)
+				return false;
+			if(Config.Instance.ForceLocalReplayViewer)
+			{
+				ReplayReader.LaunchReplayViewer(game.ReplayFile);
+				return true;
+			}
+			if(game.HasReplayFile && (!game.HsReplay?.Uploaded ?? true))
+			{
+				var log = GetLogFromHdtReplay(game.ReplayFile);
+				var validationResult = LogValidator.Validate(log);
+				if(validationResult.Valid)
+				{
+					var result = await LogUploader.Upload(log);
+					if(result.Success)
+					{
+						game.HsReplay = new HsReplayInfo(result.ReplayId);
+						if(DefaultDeckStats.Instance.DeckStats.Any(x => x.DeckId == game.DeckId))
+							DefaultDeckStats.Save();
+						else
+							DeckStatsList.Save();
+					}
+				}
+			}
+			if(game.HsReplay?.Uploaded ?? false)
+				Helper.TryOpenUrl(game.HsReplay?.Url);
+			else if(game.HasReplayFile)
+				ReplayReader.LaunchReplayViewer(game.ReplayFile);
+			else
+				return false;
+			return true;
+		}
+
+		private static List<string> GetLogFromHdtReplay(string file)
+		{
+			var path = Path.Combine(Config.Instance.ReplayDir, file);
+			if(!File.Exists(path))
+				return new List<string>();
+
+			using(var fs = new FileStream(path, FileMode.Open))
+			using(var archive = new ZipArchive(fs, ZipArchiveMode.Read))
+			using(var sr = new StreamReader(archive.GetEntry("output_log.txt").Open()))
+				return sr.ReadToEnd().Split(new[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).ToList();
+		}
+
 		public static async Task<bool> Setup()
 		{
 			try
@@ -30,6 +83,27 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 		public static async Task UploadLog(List<string> powerLog, GameStats currentGameStats, GameMetaData metaData)
 		{
 			//TODO
+		}
+
+		public static async Task ShowReplay(string fileName)
+		{
+			if(Config.Instance.ForceLocalReplayViewer)
+			{
+				ReplayReader.LaunchReplayViewer(fileName);
+				return;
+			}
+			var log = GetLogFromHdtReplay(fileName);
+			var validationResult = LogValidator.Validate(log);
+			if(validationResult.Valid)
+			{
+				var result = await LogUploader.Upload(log);
+				if(result.Success)
+					Helper.TryOpenUrl(new HsReplayInfo(result.ReplayId).Url);
+				else
+					ReplayReader.LaunchReplayViewer(fileName);
+			}
+			else
+				ReplayReader.LaunchReplayViewer(fileName);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿#region
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Hearthstone_Deck_Tracker.Utility.Logging;
@@ -13,6 +14,9 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 {
 	internal class LogUploader
 	{
+		public static async Task<UploadResult> Upload(IEnumerable<string> log)
+			=> await Upload(string.Join(Environment.NewLine, log));
+
 		public static async Task<UploadResult> Upload(string log)
 		{
 			Log.Info("Uploading...");
