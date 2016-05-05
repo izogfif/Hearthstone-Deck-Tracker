@@ -346,6 +346,7 @@
     <Compile Include="HsReplay\Converter\BuildDates.cs" />
     <Compile Include="HsReplay\Converter\LogValidator.cs" />
     <Compile Include="HsReplay\Enums\Privacy.cs" />
+    <Compile Include="HsReplay\HsReplayInfo.cs" />
     <Compile Include="HsReplay\HsReplayManager.cs" />
     <Compile Include="HsReplay\API\LogUploader.cs" />
     <Compile Include="LogReader\Handlers\LoadingScreenHandler.cs" />

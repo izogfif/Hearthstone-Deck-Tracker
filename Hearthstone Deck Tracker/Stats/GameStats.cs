@@ -15,6 +15,7 @@ using System.Xml.Serialization;
 using Hearthstone_Deck_Tracker.Annotations;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.HsReplay;
 using Hearthstone_Deck_Tracker.Utility;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 using static Hearthstone_Deck_Tracker.Enums.PlayType;
@@ -372,6 +373,8 @@ namespace Hearthstone_Deck_Tracker.Stats
 
 		public bool HasHearthStatsDeckId => !string.IsNullOrEmpty(HearthStatsDeckId) && int.Parse(HearthStatsDeckId) > 0;
 
+		public HsReplayInfo HsReplay { get; set; }
+
 		public bool BelongsToDeckVerion(Deck deck) => PlayerDeckVersion == deck.Version
 													  || (HasHearthStatsDeckVersionId && HearthStatsDeckVersionId == deck.HearthStatsDeckVersionId)
 													  || (!HasHearthStatsDeckVersionId && HasHearthStatsDeckId && HearthStatsDeckId == deck.HearthStatsId)
@@ -392,6 +395,7 @@ namespace Hearthstone_Deck_Tracker.Stats
 				WasConceded = WasConceded,
 				PlayerDeckVersion = PlayerDeckVersion,
 				HearthstoneBuild = HearthstoneBuild,
+				HsReplay = HsReplay,
 				IsClone = true
 			};
 			return newGame;
@@ -418,7 +422,7 @@ namespace Hearthstone_Deck_Tracker.Stats
 			Log.Info("Current Game ended after " + Turns + " turns");
 		}
 
-		public override string ToString() => Result + " vs " + OpponentHero + ", " + StartTime;
+		public override string ToString() => $"[{GameMode}] {Result} VS. {OpponentName} ({OpponentHero}), {StartTime.ToString("g")}";
 
 		public void ResetHearthstatsIds()
 		{
