@@ -36,6 +36,7 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 		public readonly TrackerPlugins OptionsTrackerPlugins = new TrackerPlugins();
 		public readonly TrackerSettings OptionsTrackerSettings = new TrackerSettings();
 		public readonly TrackerStats OptionsTrackerStats = new TrackerStats();
+		public readonly TrackerReplays OptionsTrackerReplays = new TrackerReplays();
 		public readonly OptionsSearch OptionsSearch = new OptionsSearch();
 
 		public OptionsMain()
@@ -91,5 +92,10 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 		private void TreeViewItemTrackerNotifications_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsTrackerNotifications;
 		private void TreeViewItemSearch_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsSearch;
 		private void TreeViewItemOverlayStreaming_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsOverlayStreaming;
+		private void TreeViewItemTrackerReplays_OnSelected(object sender, RoutedEventArgs e)
+		{
+			ContentControlOptions.Content = OptionsTrackerReplays;
+			OptionsTrackerReplays.Update();
+		}
 	}
 }

@@ -334,6 +334,9 @@
     <Compile Include="Utility\Extensions\RectExtensions.cs" />
     <Compile Include="Utility\GaussianBlur.cs" />
     <Compile Include="Utility\Themes\CardBarImageBuilder.cs" />
+    <Compile Include="FlyoutControls\Options\Tracker\TrackerReplays.xaml.cs">
+      <DependentUpon>TrackerReplays.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Hearthstone\GameTime.cs" />
     <Compile Include="Hearthstone\HearthDbConverter.cs" />
     <Compile Include="Hearthstone\GameMetaData.cs" />
@@ -919,6 +922,10 @@
     <Page Include="FlyoutControls\Options\Tracker\TrackerBackups.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="FlyoutControls\Options\Tracker\TrackerReplays.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="FlyoutControls\Options\Tracker\TrackerStats.xaml">
       <SubType>Designer</SubType>
