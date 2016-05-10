@@ -14,8 +14,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 		public string GameId { get; set; }
 		public string SpectateKey { get; set; }
 		public DateTime EnqueueTime { get; set; }
-		public string ServerIp => ServerAddress.Split(':').FirstOrDefault();
-		public string ServerPort => ServerAddress.Split(':').LastOrDefault();
+		public bool Reconnected { get; set; }
 
 		public int? HearthstoneBuild
 		{
