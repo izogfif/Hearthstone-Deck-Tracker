@@ -88,11 +88,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 			}
 		}
 
-		public static async Task UploadLog(List<string> powerLog, GameStats currentGameStats, GameMetaData metaData)
-		{
-			//TODO
-		}
-
 		public static async Task ShowReplay(string fileName, bool showToast)
 		{
 			if(Config.Instance.ForceLocalReplayViewer)
