@@ -3,7 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Hearthstone_Deck_Tracker.Hearthstone;
 using Hearthstone_Deck_Tracker.Stats;
 using Hearthstone_Deck_Tracker.Utility.Logging;
@@ -24,7 +26,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				var metaData = UploadMetaData.Generate(logLines, gameMetaData, game);
 				var log = string.Join(Environment.NewLine, logLines);
 				var url = UploadUrl + "?" + metaData.ToQueryString();
-				var response = await Web.PostAsync(url, log, ApiManager.ApiKeyHeader, await ApiManager.GetUploadTokenHeader());
+				var response = await Web.PostAsync(url, log, true, ApiManager.ApiKeyHeader, await ApiManager.GetUploadTokenHeader());
 				Log.Info(response.StatusCode.ToString());
 				using(var responseStream = response.GetResponseStream())
 				using(var reader = new StreamReader(responseStream))
@@ -44,11 +46,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 
 		public static async Task<UploadResult> FromFile(string filePath)
 		{
-			throw new NotImplementedException();
-			//string content;
-			//using(var sr = new StreamReader(filePath))
-			//	content = sr.ReadToEnd();
-			//return await Upload(content);
+			string content;
+			using(var sr = new StreamReader(filePath))
+				content = sr.ReadToEnd();
+			return await Upload(content.Split(new []{Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).ToArray(), null, null);
 		}
 	}
 }

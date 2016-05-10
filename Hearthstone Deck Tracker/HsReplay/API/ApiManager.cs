@@ -45,7 +45,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			}
 			try
 			{
-				var response = await Web.PostAsync(GenerateUploadTokenUrl, "", ApiKeyHeader);
+				var response = await Web.PostAsync(GenerateUploadTokenUrl, "", false, ApiKeyHeader);
 				using(var responseStream = response.GetResponseStream())
 				using(var reader = new StreamReader(responseStream))
 				{
