@@ -29,7 +29,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		private static HttpWebRequest CreateRequest(string url, string method)
 		{
 			var request = (HttpWebRequest)WebRequest.Create(url);
-			request.ContentType = "application/json";
+			request.ContentType = "text/plain";
 			request.Accept = "application/json";
 			request.Method = method;
 			return request;
