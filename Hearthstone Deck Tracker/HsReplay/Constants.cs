@@ -17,6 +17,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 		public static string BaseApiUrl => BaseUrl + BaseApi;
 		public static string UploadUrl => BaseApiUrl + RawUploadApi;
 		public static string GenerateUploadTokenUrl => BaseApiUrl + GenerateUploadTokenApi;
-		public static string UploadTokenFilePath => Path.Combine(Config.Instance.DataDirPath, UploadTokenFile);
+		public static string UploadTokenFilePath => Path.Combine(Config.Instance.DataDir, UploadTokenFile);
 	}
 }
