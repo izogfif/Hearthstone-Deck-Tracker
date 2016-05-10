@@ -29,34 +29,34 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		}
 
 		[ApiField("game_server_address")]
-		public string ServerIp => _gameMetaData.ServerAddress.Split(':').FirstOrDefault();
+		public string ServerIp => _gameMetaData?.ServerAddress.Split(':').FirstOrDefault();
 
 		[ApiField("game_server_port")]
-		public string ServerPort => _gameMetaData.ServerAddress.Split(':').LastOrDefault();
+		public string ServerPort => _gameMetaData?.ServerAddress.Split(':').LastOrDefault();
 
 		[ApiField("game_server_game_id")]
-		public string GameId => _gameMetaData.GameId;
+		public string GameId => _gameMetaData?.GameId;
 
 		[ApiField("game_server_client_id")]
-		public string ClientId => _gameMetaData.ClientId;
+		public string ClientId => _gameMetaData?.ClientId;
 
 		[ApiField("game_server_reconnecting")]
-		public string Reconnected => _gameMetaData.Reconnected ? "true" : null;
+		public string Reconnected => _gameMetaData?.Reconnected ?? false ? "true" : null;
 
 		[ApiField("game_server_spectate_key")]
-		public string SpectateKey => _gameMetaData.SpectateKey;
+		public string SpectateKey => _gameMetaData?.SpectateKey;
 
 		[ApiField("match_start_timestamp")]
-		public string TimeStamp => _game.StartTime != DateTime.MinValue ? _game.StartTime.ToString("o") : null;
+		public string TimeStamp => _game?.StartTime != DateTime.MinValue ? _game?.StartTime.ToString("o") : null;
 
 		[ApiField("hearthstone_build")]
-		public int? HearthstoneBuild => _gameMetaData.HearthstoneBuild;
+		public int? HearthstoneBuild => _gameMetaData?.HearthstoneBuild;
 
 		[ApiField("game_type")]
-		public int BnetGameType => (int)HearthDbConverter.GetGameType(_game.GameMode, _game.Format);
+		public int? BnetGameType => _game != null ? (int)HearthDbConverter.GetGameType(_game.GameMode, _game.Format) : (int?)null;
 
 		[ApiField("is_spectated_game")]
-		public string IsSpectatedGame => _game.GameMode == GameMode.Spectator ? "true" : null;
+		public string IsSpectatedGame => _game?.GameMode == GameMode.Spectator ? "true" : null;
 
 		[ApiField("player_1_rank")]
 		public int? Player1Rank { get; set; }
@@ -79,31 +79,31 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		private void FillPlayerData()
 		{
 			var player1Name = GetPlayer1Name();
-			if(player1Name == _game.PlayerName)
+			if(player1Name == _game?.PlayerName)
 			{
-				if(_game.Rank > 0)
-					Player1Rank = _game.Rank;
-				if(_game.LegendRank > 0)
-					Player1LegendRank = _game.LegendRank;
-				if(_game.PlayerCards.Sum(x => x.Count) == 30 && _game.PlayerCards.Sum(x => x.Unconfirmed) == 0)
-					Player1DeckList = string.Join(",", _game.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
-				if(_game.OpponentRank > 0)
-					Player2Rank = _game.OpponentRank;
-				if(_game.OpponentCards.Sum(x => x.Count) == 30 && _game.OpponentCards.Sum(x => x.Unconfirmed) == 0)
-					Player2DeckList = string.Join(",", _game.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+				if(_game?.Rank > 0)
+					Player1Rank = _game?.Rank;
+				if(_game?.LegendRank > 0)
+					Player1LegendRank = _game?.LegendRank;
+				if(_game?.PlayerCards.Sum(x => x.Count) == 30 && _game?.PlayerCards.Sum(x => x.Unconfirmed) == 0)
+					Player1DeckList = string.Join(",", _game?.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+				if(_game?.OpponentRank > 0)
+					Player2Rank = _game?.OpponentRank;
+				if(_game?.OpponentCards.Sum(x => x.Count) == 30 && _game?.OpponentCards.Sum(x => x.Unconfirmed) == 0)
+					Player2DeckList = string.Join(",", _game?.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
 			}
-			else if(player1Name == _game.OpponentName)
+			else if(player1Name == _game?.OpponentName)
 			{
-				if(_game.Rank > 0)
-					Player2Rank = _game.Rank;
-				if(_game.LegendRank > 0)
-					Player2LegendRank = _game.LegendRank;
-				if(_game.PlayerCards.Sum(x => x.Count) == 30 && _game.PlayerCards.Sum(x => x.Unconfirmed) == 0)
-					Player2DeckList = string.Join(",", _game.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
-				if(_game.OpponentRank > 0)
-					Player1Rank = _game.OpponentRank;
-				if(_game.OpponentCards.Sum(x => x.Count) == 30 && _game.OpponentCards.Sum(x => x.Unconfirmed) == 0)
-					Player1DeckList = string.Join(",", _game.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+				if(_game?.Rank > 0)
+					Player2Rank = _game?.Rank;
+				if(_game?.LegendRank > 0)
+					Player2LegendRank = _game?.LegendRank;
+				if(_game?.PlayerCards.Sum(x => x.Count) == 30 && _game?.PlayerCards.Sum(x => x.Unconfirmed) == 0)
+					Player2DeckList = string.Join(",", _game?.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+				if(_game?.OpponentRank > 0)
+					Player1Rank = _game?.OpponentRank;
+				if(_game?.OpponentCards.Sum(x => x.Count) == 30 && _game?.OpponentCards.Sum(x => x.Unconfirmed) == 0)
+					Player1DeckList = string.Join(",", _game?.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
 			}
 		}
 
