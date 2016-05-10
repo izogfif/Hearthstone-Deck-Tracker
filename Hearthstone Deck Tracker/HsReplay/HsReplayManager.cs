@@ -41,7 +41,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 				var validationResult = LogValidator.Validate(log);
 				if(validationResult.Valid)
 				{
-					var result = await LogUploader.Upload(log);
+					var result = await LogUploader.Upload(log.ToArray(), null, game);
 					if(result.Success)
 					{
 						game.HsReplay = new HsReplayInfo(result.ReplayId);
@@ -104,7 +104,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 				if(showToast && setToastStatus == null)
 					setToastStatus = ToastManager.ShowReplayProgressToast();
 				setToastStatus?.Invoke(ReplayProgress.Uploading);
-				var result = await LogUploader.Upload(log);
+				var result = await LogUploader.Upload(log.ToArray(), null, null);
 				if(result.Success)
 					Helper.TryOpenUrl(new HsReplayInfo(result.ReplayId).Url);
 				else

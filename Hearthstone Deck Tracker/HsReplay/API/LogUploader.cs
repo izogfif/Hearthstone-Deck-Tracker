@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Stats;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 using Newtonsoft.Json;
 using static Hearthstone_Deck_Tracker.HsReplay.Constants;
@@ -14,15 +16,15 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 {
 	internal class LogUploader
 	{
-		public static async Task<UploadResult> Upload(IEnumerable<string> log)
-			=> await Upload(string.Join(Environment.NewLine, log));
-
-		public static async Task<UploadResult> Upload(string log)
+		public static async Task<UploadResult> Upload(string[] logLines, GameMetaData gameMetaData, GameStats game)
 		{
 			Log.Info("Uploading...");
 			try
 			{
-				var response = await Web.PostAsync(UploadUrl, log, ApiManager.ApiKeyHeader, await ApiManager.GetUploadTokenHeader());
+				var metaData = UploadMetaData.Generate(logLines, gameMetaData, game);
+				var log = string.Join(Environment.NewLine, logLines);
+				var url = UploadUrl + "?" + metaData.ToQueryString();
+				var response = await Web.PostAsync(url, log, ApiManager.ApiKeyHeader, await ApiManager.GetUploadTokenHeader());
 				Log.Info(response.StatusCode.ToString());
 				using(var responseStream = response.GetResponseStream())
 				using(var reader = new StreamReader(responseStream))
@@ -42,10 +44,11 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 
 		public static async Task<UploadResult> FromFile(string filePath)
 		{
-			string content;
-			using(var sr = new StreamReader(filePath))
-				content = sr.ReadToEnd();
-			return await Upload(content);
+			throw new NotImplementedException();
+			//string content;
+			//using(var sr = new StreamReader(filePath))
+			//	content = sr.ReadToEnd();
+			//return await Upload(content);
 		}
 	}
 }
