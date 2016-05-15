@@ -2,8 +2,10 @@
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Hearthstone_Deck_Tracker.Annotations;
+using Hearthstone_Deck_Tracker.Utility.Extensions;
 
 #endregion
 
@@ -15,13 +17,26 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts.ToastControls
 	public partial class ReplayProgressToast : INotifyPropertyChanged
 	{
 		private ReplayProgress _status = ReplayProgress.Uploading;
+		private ProgressIndicatorState _progressState = ProgressIndicatorState.Working;
 
 		public ReplayProgressToast()
 		{
 			InitializeComponent();
 		}
 
-		public string StatusText => Status.ToString().ToUpper() + (Status == ReplayProgress.Complete ? "" : "...");
+		public string StatusText => Status.ToString().ToUpper() + (Status == ReplayProgress.Uploading ? "..." : "");
+
+		public ProgressIndicatorState ProgressState
+		{
+			get { return _progressState; }
+			set
+			{
+				if(_progressState == value)
+					return;
+				_progressState = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public ReplayProgress Status
 		{
@@ -31,9 +46,24 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts.ToastControls
 				_status = value;
 				OnPropertyChanged();
 				OnPropertyChanged(nameof(StatusText));
-				if(_status == ReplayProgress.Complete)
-					ToastManager.ForceCloseToast(this);
+				switch(_status)
+				{
+					case ReplayProgress.Error:
+						ProgressState = ProgressIndicatorState.Error;
+						DelayedForceClose(2000).Forget();
+						break;
+					case ReplayProgress.Complete:
+						ProgressState = ProgressIndicatorState.Success;
+						ToastManager.ForceCloseToast(this);
+						break;
+				}
 			}
+		}
+
+		private async Task DelayedForceClose(int ms)
+		{
+			await Task.Delay(ms);
+			ToastManager.ForceCloseToast(this);
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;

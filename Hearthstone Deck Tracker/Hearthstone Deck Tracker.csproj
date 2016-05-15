@@ -494,6 +494,9 @@
     <Compile Include="Utility\Themes\DarkBarImageBuilder.cs" />
     <Compile Include="Utility\Themes\Theme.cs" />
     <Compile Include="Utility\Themes\ThemeManager.cs" />
+    <Compile Include="Utility\Toasts\ToastControls\ProgressIndicator.xaml.cs">
+      <DependentUpon>ProgressIndicator.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utility\WotogCounterHelper.cs" />
     <Compile Include="Utility\Toasts\ToastControls\GameResultToast.xaml.cs">
       <DependentUpon>GameResultToast.xaml</DependentUpon>
@@ -977,6 +980,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Utility\Toasts\ToastControls\GameResultToast.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Utility\Toasts\ToastControls\ProgressIndicator.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
