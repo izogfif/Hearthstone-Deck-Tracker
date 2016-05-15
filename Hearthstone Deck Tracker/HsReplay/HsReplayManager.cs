@@ -36,7 +36,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 			{
 				if(showToast)
 					setToastStatus = ToastManager.ShowReplayProgressToast();
-				setToastStatus?.Invoke(ReplayProgress.Uploading);
 				var log = GetLogFromHdtReplay(game.ReplayFile);
 				var validationResult = LogValidator.Validate(log);
 				if(validationResult.Valid)
@@ -52,13 +51,21 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 					}
 				}
 			}
-			setToastStatus?.Invoke(ReplayProgress.Complete);
 			if(game.HsReplay?.Uploaded ?? false)
+			{
+				setToastStatus?.Invoke(ReplayProgress.Complete);
 				Helper.TryOpenUrl(game.HsReplay?.Url);
+			}
 			else if(game.HasReplayFile)
+			{
+				setToastStatus?.Invoke(ReplayProgress.Error);
 				ReplayReader.LaunchReplayViewer(game.ReplayFile);
+			}
 			else
+			{
+				setToastStatus?.Invoke(ReplayProgress.Error);
 				return false;
+			}
 			return true;
 		}
 

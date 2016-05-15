@@ -2,8 +2,8 @@
 {
 	public enum ReplayProgress
 	{
-		Converting,
 		Uploading,
-		Complete
+		Complete,
+		Error
 	}
 }

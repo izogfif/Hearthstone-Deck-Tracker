@@ -14,7 +14,7 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts.ToastControls
 	/// </summary>
 	public partial class ReplayProgressToast : INotifyPropertyChanged
 	{
-		private ReplayProgress _status = ReplayProgress.Converting;
+		private ReplayProgress _status = ReplayProgress.Uploading;
 
 		public ReplayProgressToast()
 		{
