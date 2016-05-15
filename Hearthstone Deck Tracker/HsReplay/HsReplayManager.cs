@@ -67,11 +67,18 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 			var path = Path.Combine(Config.Instance.ReplayDir, file);
 			if(!File.Exists(path))
 				return new List<string>();
-
-			using(var fs = new FileStream(path, FileMode.Open))
-			using(var archive = new ZipArchive(fs, ZipArchiveMode.Read))
-			using(var sr = new StreamReader(archive.GetEntry("output_log.txt").Open()))
-				return sr.ReadToEnd().Split(new[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).ToList();
+			try
+			{
+				using(var fs = new FileStream(path, FileMode.Open))
+				using(var archive = new ZipArchive(fs, ZipArchiveMode.Read))
+				using(var sr = new StreamReader(archive.GetEntry("output_log.txt").Open()))
+					return sr.ReadToEnd().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+			}
+			catch(Exception e)
+			{
+				Log.Error(e);
+				return new List<string>();
+			}
 		}
 
 		public static async Task<bool> Setup()
