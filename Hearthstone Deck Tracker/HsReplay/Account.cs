@@ -6,6 +6,5 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 	{
 		public static AccountStatus Status { get; set; }
 		public static string BattleTag { get; set; }
-		public static bool ReplaysArePublic { get; set; }
 	}
 }

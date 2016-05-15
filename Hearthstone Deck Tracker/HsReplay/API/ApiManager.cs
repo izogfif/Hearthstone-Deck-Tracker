@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Hearthstone_Deck_Tracker.Controls.Error;
 using Hearthstone_Deck_Tracker.HsReplay.Enums;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 using Newtonsoft.Json;
@@ -18,7 +19,26 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 
 		public static Header ApiKeyHeader => new Header(ApiKeyHeaderName, ApiKey);
 		public static async Task<Header> GetUploadTokenHeader() => new Header(ApiUploadTokenHeaderName, await GetUploadToken());
-		
+
+
+		internal static void DeleteUploadToken()
+		{
+			if(File.Exists(UploadTokenFilePath))
+			{
+				try
+				{
+					File.Delete(UploadTokenFilePath);
+					_uploadToken = null;
+				}
+				catch(Exception e)
+				{
+					Log.Error(e);
+				}
+			}
+		}
+
+		internal static string UploadToken => _uploadToken;
+
 		private static string _uploadToken;
 		private static async Task<string> GetUploadToken()
 		{
@@ -80,15 +100,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 
 		private static async Task<string> GetClaimAccountUrl() => $"{BaseApiUrl}/agents/{ApiKey}/attach_upload_token/{await GetUploadToken()}";
 
-		public static async Task<bool> UpdateReplayPrivacy(bool isPublic)
-		{
-			Log.Info($"Setting replay privacy to public={isPublic}");
-			var json = JsonConvert.SerializeObject(new { replays_are_public = isPublic });
-			var response = await Web.PutAsync(await GetAccountUrl(), json, ApiKeyHeader);
-			Log.Info($"Status={response.StatusCode}");
-			return response.StatusCode == HttpStatusCode.OK;
-		}
-
 		public static async Task ClaimAccount()
 		{
 			try
@@ -96,9 +107,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				Log.Info("Opening browser to claim account");
 				Process.Start(await GetClaimAccountUrl());
 			}
-			catch(Exception)
+			catch(Exception e)
 			{
-				Log.Error("Could not open browser.");
+				Log.Error(e);
+				ErrorManager.AddError("Error claiming account", e.Message);
 			}
 		}
 
@@ -119,8 +131,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 						statusMsg += " Status=" + status;
 						Account.BattleTag = (string)json.battle_tag;
 						statusMsg += " BattleTag=" + Account.BattleTag;
-						Account.ReplaysArePublic = (bool)json.replays_are_public;
-						statusMsg += " ReplaysArePublic=" + Account.ReplaysArePublic;
 						AccountStatus accountStatus;
 						if(Enum.TryParse(status, true, out accountStatus))
 							Account.Status = accountStatus;

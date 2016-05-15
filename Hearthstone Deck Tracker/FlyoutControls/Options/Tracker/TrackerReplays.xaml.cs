@@ -3,6 +3,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Hearthstone_Deck_Tracker.Annotations;
@@ -30,48 +31,55 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 		}
 
 		public Visibility TextClaimVisibility => Account.Status == Anonymous ? Visible : Collapsed;
+		public bool TextUnclaimIsEnabled => Account.Status != Anonymous;
 		public AccountStatus AccountStatus => Account.Status;
 		public string BattleTag => Account.Status == Anonymous ? string.Empty : $"({Account.BattleTag})";
-
-		public bool UploadPublic
-		{
-			get { return Account.ReplaysArePublic; }
-			set { UpdatePrivacySetting(value); }
-		}
-
-		private async void UpdatePrivacySetting(bool value)
-		{
-			if(Account.ReplaysArePublic == value)
-				return;
-			CheckBoxReplayPrivacy.IsEnabled = false;
-			Cursor = Cursors.Wait;
-			try
-			{
-				if(await ApiManager.UpdateReplayPrivacy(value))
-					Account.ReplaysArePublic = value;
-			}
-			catch(Exception e)
-			{
-				Log.Error(e);
-				ErrorManager.AddError("Could not update replay privacy setting.", e.ToString());
-			}
-			finally
-			{
-				CheckBoxReplayPrivacy.IsEnabled = true;
-				OnPropertyChanged(nameof(UploadPublic));
-				Cursor = Cursors.Arrow;
-			}
-		}
+		public string UploadToken => ApiManager.UploadToken;
 
 		public void Update()
 		{
 			OnPropertyChanged(nameof(TextClaimVisibility));
+			OnPropertyChanged(nameof(TextUnclaimIsEnabled));
 			OnPropertyChanged(nameof(AccountStatus));
 			OnPropertyChanged(nameof(BattleTag));
-			OnPropertyChanged(nameof(UploadPublic));
+			OnPropertyChanged(nameof(UploadToken));
 		}
 
-		private void ButtonClaimAccount_OnClick(object sender, RoutedEventArgs e) => ApiManager.ClaimAccount().Forget();
+		private async void ButtonClaimAccount_OnClick(object sender, RoutedEventArgs e)
+		{
+			ApiManager.ClaimAccount().Forget();
+			await Task.Delay(2000);
+			CheckForAccountUpdateAsync(Registered).Forget();
+		}
+
+		private bool _checkingForAccountUpdate;
+		internal async Task CheckForAccountUpdateAsync(AccountStatus? targetStatus = null)
+		{
+			if(_checkingForAccountUpdate)
+				return;
+			ProgressRing.IsActive = true;
+			_checkingForAccountUpdate = true;
+			for(var i = 0; i < 10; i++)
+			{
+				Log.Debug($"Checking account info... try #{i+1}");
+				await ApiManager.UpdateAccountStatus();
+				if(targetStatus == null || Account.Status == targetStatus)
+				{
+					Log.Debug("Found updated account status");
+					Update();
+					break;
+				}
+				await Task.Delay(5000 + (int)Math.Sqrt(i * 5000));
+			}
+			ProgressRing.IsActive = false;
+			_checkingForAccountUpdate = false;
+		}
+
+		private void ButtonUnclaimAccount_OnClick(object sender, RoutedEventArgs e)
+		{
+			ApiManager.DeleteUploadToken();
+			CheckForAccountUpdateAsync(Anonymous).Forget();
+		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -79,24 +87,6 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-
-		private async void ButtonRefresh_OnClick(object sender, RoutedEventArgs e)
-		{
-			ButtonRefresh.IsEnabled = false;
-			try
-			{
-				await ApiManager.UpdateAccountStatus();
-				Update();
-			}
-			catch(Exception ex)
-			{
-				Log.Error(ex);
-			}
-			finally
-			{
-				ButtonRefresh.IsEnabled = true;
-			}
 		}
 	}
 }
