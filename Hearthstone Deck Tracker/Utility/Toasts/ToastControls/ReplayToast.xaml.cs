@@ -1,5 +1,6 @@
 ﻿#region
 
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Hearthstone_Deck_Tracker.Annotations;
@@ -14,7 +15,7 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts.ToastControls
 	/// <summary>
 	/// Interaction logic for ReplayToast.xaml
 	/// </summary>
-	public partial class ReplayToast : UserControl
+	public partial class ReplayToast
 	{
 		private readonly GameStats _game;
 
@@ -24,10 +25,11 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts.ToastControls
 			_game = game;
 		}
 
-		private void BorderReplay_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		private async void BorderReplay_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			HsReplayManager.ShowReplay(_game, true).Forget();
 			ToastManager.ForceCloseToast(this);
+			await Task.Delay(500);
+			HsReplayManager.ShowReplay(_game, true).Forget();
 		}
 
 		private void BorderReplay_OnMouseEnter(object sender, MouseEventArgs e)

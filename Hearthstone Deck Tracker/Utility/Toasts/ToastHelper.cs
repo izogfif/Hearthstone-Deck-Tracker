@@ -17,7 +17,10 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts
 		public ToastHelper(UserControl control)
 		{
 			_window = new ToastWindow(control);
+			ToastType = control.GetType();
 		}
+
+		public Type ToastType { get; }
 
 		// ReSharper disable once PossibleUnintendedReferenceComparison
 		public bool IsToastWindow(UserControl control) => _window.ContentControl.Content == control;

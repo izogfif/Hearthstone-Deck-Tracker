@@ -14,13 +14,17 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts
 	public static class ToastManager
 	{
 		private static readonly List<ToastHelper> Toasts = new List<ToastHelper>();
+		private static readonly Dictionary<ToastHelper, ToastHelper> GameResultToasts = new Dictionary<ToastHelper, ToastHelper>();
 
 		internal static void ShowGameResultToast(string deckName, GameStats game)
 		{
 			if(game == null)
 				return;
-			ShowToast(new ToastHelper(new GameResultToast(deckName, game)));
-			ShowToast(new ToastHelper(new ReplayToast(game)));
+			var result = new ToastHelper(new GameResultToast(deckName, game));
+			var replay = new ToastHelper(new ReplayToast(game));
+			GameResultToasts.Add(replay, result);
+			ShowToast(result);
+			ShowToast(replay);
 		}
 
 		internal static Action<ReplayProgress> ShowReplayProgressToast()
@@ -33,7 +37,19 @@ namespace Hearthstone_Deck_Tracker.Utility.Toasts
 
 		public static void ShowCustomToast(UserControl content) => ShowToast(new ToastHelper(content));
 
-		public static void ForceCloseToast(UserControl control) => Toasts.FirstOrDefault(x => x.IsToastWindow(control))?.ForceClose();
+		public static void ForceCloseToast(UserControl control)
+		{
+			var toast = Toasts.FirstOrDefault(x => x.IsToastWindow(control));
+			if(toast == null)
+				return;
+			if(toast.ToastType == typeof(ReplayToast))
+			{
+				ToastHelper resultToast;
+				if(GameResultToasts.TryGetValue(toast, out resultToast))
+					resultToast.ForceClose();
+			}
+			toast.ForceClose();
+		}
 
 		private static async void ShowToast(ToastHelper toastHelper, int fadeOutDelay = 0)
 		{
