@@ -43,12 +43,17 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				{
 					dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
 					string id = json.replay_uuid;
+					if(string.IsNullOrEmpty(id))
+						throw new Exception("Server returned empty uuid. " + json.msg);
 					result = UploadResult.Successful(id);
-					game.HsReplay = new HsReplayInfo(result.ReplayId);
-					if(DefaultDeckStats.Instance.DeckStats.Any(x => x.DeckId == game.DeckId))
-						DefaultDeckStats.Save();
-					else
-						DeckStatsList.Save();
+					if(game != null)
+					{
+						game.HsReplay = new HsReplayInfo(result.ReplayId);
+						if(DefaultDeckStats.Instance.DeckStats.Any(x => x.DeckId == game.DeckId))
+							DefaultDeckStats.Save();
+						else
+							DeckStatsList.Save();
+					}
 				}
 			}
 			catch(Exception e)
