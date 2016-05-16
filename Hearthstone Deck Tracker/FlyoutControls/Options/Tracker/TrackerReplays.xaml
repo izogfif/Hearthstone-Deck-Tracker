@@ -24,10 +24,15 @@
                         <Label Content="Account Status:" DockPanel.Dock="Left"/>
                         <Label Content="{Binding AccountStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" DockPanel.Dock="Left"/>
                         <controls:ProgressRing Name="ProgressRing" IsActive="False" DockPanel.Dock="Right" Foreground="{DynamicResource AccentColorBrush}" Visibility="{Binding ProgressRingVisibility}" Width="16" Height="16"/>
-                        <TextBlock VerticalAlignment="Center" Text="{Binding BattleTag, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <TextBlock VerticalAlignment="Center">
+                            <Hyperlink Click="HyperlinkBattleTag_OnClick">
+                                <Run Text="{Binding BattleTag, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}"/>
+                            </Hyperlink>
+                        </TextBlock>
                     </DockPanel>
                     <Button Name="ButtonClaimAccount" Content="Claim Account" Margin="0,2,0,0" Visibility="{Binding TextClaimVisibility, RelativeSource={RelativeSource AncestorType=UserControl}}" Click="ButtonClaimAccount_OnClick"/>
-                    <Label Content="Some text about claiming..." Visibility="{Binding TextClaimVisibility, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                    <TextBlock Text="Log in with your Battle.net credentials on HSReplay.net to claim your existing replays. This will open your web browser." TextWrapping="Wrap"
+                           Margin="0,5,0,0" Visibility="{Binding TextClaimVisibility, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                     <Label Content="{Binding UploadToken, RelativeSource={RelativeSource AncestorType=UserControl}}" Foreground="{Binding Color, Source={x:Static options:AdvancedOptions.Instance}}"
                             Visibility="{Binding Visibility, Source={x:Static options:AdvancedOptions.Instance}}"/>
                     <Button Name="ButtonUnclaimAccount" Content="Unclaim Account" Margin="0,2,0,0" 

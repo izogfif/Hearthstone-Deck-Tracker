@@ -35,6 +35,8 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 		public AccountStatus AccountStatus => Account.Status;
 		public string BattleTag => Account.Status == Anonymous ? string.Empty : $"({Account.BattleTag})";
 		public string UploadToken => ApiManager.UploadToken;
+		private const string ButtonTextClaim = "Claim Account";
+		private const string ButtonTextWaiting = "Waiting for HSReplay.net...";
 
 		public void Update()
 		{
@@ -47,9 +49,13 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 
 		private async void ButtonClaimAccount_OnClick(object sender, RoutedEventArgs e)
 		{
+			ButtonClaimAccount.Content = ButtonTextWaiting;
+			ButtonClaimAccount.IsEnabled = false;
 			ApiManager.ClaimAccount().Forget();
-			await Task.Delay(2000);
-			CheckForAccountUpdateAsync(Registered).Forget();
+			await Task.Delay(3000);
+			ButtonClaimAccount.IsEnabled = true;
+			await CheckForAccountUpdateAsync(Registered);
+			ButtonClaimAccount.Content = ButtonTextClaim;
 		}
 
 		private bool _checkingForAccountUpdate;
@@ -88,5 +94,7 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
+
+		private void HyperlinkBattleTag_OnClick(object sender, RoutedEventArgs e) => Helper.TryOpenUrl("http://hsreplay.net/account/");
 	}
 }
