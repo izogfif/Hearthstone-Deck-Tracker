@@ -333,7 +333,7 @@
                     <MenuItem Header="_ARENA"  Click="BtnArenaStats_Click"/>
                     <MenuItem Header="_CONSTRUCTED"  Click="BtnConstructedStats_Click"/>
                 </MenuItem>
-                <MenuItem Header="_REPLAYS">
+                <MenuItem Header="_REPLAYS" SubmenuOpened="MenuItemReplays_OnSubmenuOpened">
                     <MenuItem.Icon>
                         <Rectangle Width="16" Height="16" Margin="0,0,-10,0">
                             <Rectangle.Fill>
@@ -359,17 +359,24 @@
                     </MenuItem>
                     <MenuItem Header="_SELECT FROM STATS" Click="MenuItemReplaySelectGame_OnClick" />
                     <MenuItem Header="LOAD FROM _FILE" Click="MenuItemReplayFromFile_OnClick"/>
-                    <Grid Margin="-10,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Separator Grid.Column="0"/>
-                        <TextBlock Grid.Column="1" Text="HSREPLAY.NET" IsEnabled="False" Margin="5,0"/>
-                        <Separator Grid.Column="2"/>
-                    </Grid>
-                    <MenuItem Header="MY ACCOUNT"/>
+                    <MenuItem StaysOpenOnClick="True" Click="MenuItemHsReplay_OnClick">
+                        <MenuItem.Header>
+                            <Grid Margin="-10,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Separator Grid.Column="0"/>
+                                <TextBlock Grid.Column="1" Text="HSREPLAY.NET" IsEnabled="False" Margin="5,0"/>
+                                <Separator Grid.Column="2"/>
+                            </Grid>
+                        </MenuItem.Header>
+                    </MenuItem>
+                    <MenuItem Header="CLAIM ACCOUNT" Click="MenuItemReplayClaimAccount_OnClick" 
+                              Visibility="{Binding MenuItemReplayClaimAccountVisibility, RelativeSource={RelativeSource AncestorType=controls:MetroWindow}}"/>
+                    <MenuItem Header="MY ACCOUNT" Click="MenuItemReplayMyAccount_OnClick"
+                              Visibility="{Binding MenuItemReplayMyAccountVisibility, RelativeSource={RelativeSource AncestorType=controls:MetroWindow}}"/>
                 </MenuItem>
                 <MenuItem Header="_HEARTHSTATS" SubmenuOpened="MenuItemHearthStats_OnSubmenuOpened">
                     <MenuItem.Icon>
