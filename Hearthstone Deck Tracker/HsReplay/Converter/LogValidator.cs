@@ -14,8 +14,20 @@ namespace Hearthstone_Deck_Tracker.HsReplay.Converter
 				Log.Warn($"Log was empty. {result}");
 				return result;
 			}
+			if(log[0].StartsWith("["))
+			{
+				result.Valid = false;
+				Log.Warn($"Output log not supported. {result}");
+				return result;
+			}
 			Log.Info($"Log length: {log.Count} lines");
 			result.IsPowerTaskList = log[0].Contains("PowerTaskList.");
+			if(result.IsPowerTaskList)
+			{
+				result.Valid = false;
+				Log.Warn($"PowerTaskList logs are not supported. {result}");
+				return result;
+			}
 			var createGameLine = -1;
 			for(var i = 0; i < log.Count - 1; i++)
 			{
@@ -23,6 +35,12 @@ namespace Hearthstone_Deck_Tracker.HsReplay.Converter
 				{
 					createGameLine = i;
 					Log.Info($"Found 'CREATE_GAME' at line {i+1}");
+					if(i > 100)
+					{
+						result.Valid = false;
+						Log.Warn($"Invalid log file. {result}");
+						return result;
+					}
 					break;
 				}
 			}
