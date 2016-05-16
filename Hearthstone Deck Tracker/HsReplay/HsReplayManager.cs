@@ -114,11 +114,13 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 			var validationResult = LogValidator.Validate(log);
 			if(validationResult.Valid)
 			{
-
-				if(showToast && setToastStatus == null)
+				if(showToast)
 					setToastStatus = ToastManager.ShowReplayProgressToast();
 				setToastStatus?.Invoke(ReplayProgress.Uploading);
-				var result = await LogUploader.Upload(log.ToArray(), null, null);
+				var file = new FileInfo(fileName);
+				var hsBuild = BuildDates.GetByDate(file.LastWriteTime);
+				var metaData = hsBuild != null ? new GameMetaData() {HearthstoneBuild = hsBuild} : null;
+				var result = await LogUploader.Upload(log.ToArray(), metaData, null);
 				if(result.Success)
 					Helper.TryOpenUrl(new HsReplayInfo(result.ReplayId).Url);
 				else

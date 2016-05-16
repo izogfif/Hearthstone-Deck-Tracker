@@ -30,10 +30,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		}
 
 		[ApiField("game_server_address")]
-		public string ServerIp => _gameMetaData?.ServerAddress.Split(':').FirstOrDefault();
+		public string ServerIp => _gameMetaData?.ServerAddress?.Split(':').FirstOrDefault();
 
 		[ApiField("game_server_port")]
-		public string ServerPort => _gameMetaData?.ServerAddress.Split(':').LastOrDefault();
+		public string ServerPort => _gameMetaData?.ServerAddress?.Split(':').LastOrDefault();
 
 		[ApiField("game_server_game_id")]
 		public string GameId => _gameMetaData?.GameId;
