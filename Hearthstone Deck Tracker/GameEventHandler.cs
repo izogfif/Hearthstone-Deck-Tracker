@@ -87,23 +87,7 @@ namespace Hearthstone_Deck_Tracker
 			DeckManager.ResetIgnoredDeckId();
 			Core.Windows.CapturableOverlay?.UpdateContentVisibility();
 
-
-			if(_game.StoredGameStats != null)
-				_game.CurrentGameStats.StartTime = _game.StoredGameStats.StartTime;
-
-			if(_game.CurrentGameStats != null)
-			{
-				var powerLog = new List<string>();
-				foreach(var stored in _game.StoredPowerLogs.Where(x => x.Item1 == _game.MetaData.GameId))
-					powerLog.AddRange(stored.Item2);
-				powerLog.AddRange(_game.PowerLog);
-
-				if(Config.Instance.RecordReplays && RecordCurrentGameMode && _game.Entities.Count > 0 && !_game.SavedReplay && _game.CurrentGameStats.ReplayFile == null)
-					_game.CurrentGameStats.ReplayFile = ReplayMaker.SaveToDisk(powerLog);
-
-				if(Config.Instance.HsReplayAutoUpload && UploadCurrentGameMode)
-					LogUploader.Upload(powerLog.ToArray(), _game.MetaData, _game.CurrentGameStats).Forget();
-			}
+			SaveReplays();
 
 			SaveAndUpdateStats();
 
@@ -140,6 +124,32 @@ namespace Hearthstone_Deck_Tracker
 			if(!Config.Instance.KeepDecksVisible)
 				Core.Reset().Forget();
 			GameEvents.OnInMenu.Execute();
+		}
+
+		private bool _savedReplay;
+		private void SaveReplays()
+		{
+			if(!_savedReplay && _game.CurrentGameStats != null)
+			{
+				_savedReplay = true;
+				var powerLog = new List<string>();
+				foreach(var stored in _game.StoredPowerLogs.Where(x => x.Item1 == _game.MetaData.GameId))
+					powerLog.AddRange(stored.Item2);
+				powerLog.AddRange(_game.PowerLog);
+
+				if(_usePostGameLegendRank)
+				{
+					_game.CurrentGameStats.LegendRank = _game.MetaData.LegendRank;
+					_usePostGameLegendRank = false;
+				}
+
+				if(Config.Instance.RecordReplays && RecordCurrentGameMode && _game.Entities.Count > 0 && !_game.SavedReplay
+					&& _game.CurrentGameStats.ReplayFile == null)
+					_game.CurrentGameStats.ReplayFile = ReplayMaker.SaveToDisk(powerLog);
+
+				if(Config.Instance.HsReplayAutoUpload && UploadCurrentGameMode)
+					LogUploader.Upload(powerLog.ToArray(), _game.MetaData, _game.CurrentGameStats).Forget();
+			}
 		}
 
 		public void HandleConcede()
@@ -381,6 +391,7 @@ namespace Hearthstone_Deck_Tracker
 			_arenaRewardDialog = null;
 			_showedNoteDialog = false;
 			_game.IsInMenu = false;
+			_savedReplay = false;
 			_game.Reset();
 			_game.CacheMatchInfo();
 			TurnTimer.Instance.Start(_game).Forget();
@@ -558,16 +569,7 @@ namespace Hearthstone_Deck_Tracker
 					if (Config.Instance.AutoArchiveArenaDecks && isArenaRunCompleted)
 						Core.MainWindow.ArchiveDeck(selectedDeck, true);
 
-					if(HearthStatsAPI.IsLoggedIn && Config.Instance.HearthStatsAutoUploadNewGames)
-					{
-						Log.Info("Waiting for game mode to be saved to game...");
-						await GameModeSaved(15);
-						Log.Info("Game mode was saved, continuing.");
-						if(_game.CurrentGameMode == Arena)
-							HearthStatsManager.UploadArenaMatchAsync(_lastGame, selectedDeck, background: true);
-						else if(_game.CurrentGameMode != Brawl)
-							HearthStatsManager.UploadMatchAsync(_lastGame, selectedDeck, background: true);
-					}
+					UploadHearthStatsAsync(selectedDeck).Forget();
 					_lastGame = null;
 				}
 				else
@@ -584,6 +586,12 @@ namespace Hearthstone_Deck_Tracker
 					_assignedDeck = null;
 				}
 
+			if(_game.StoredGameStats != null)
+				_game.CurrentGameStats.StartTime = _game.StoredGameStats.StartTime;
+
+			if(!_usePostGameLegendRank && _game.CurrentGameMode != None)
+				SaveReplays();
+
 				if(Config.Instance.ReselectLastDeckUsed && selectedDeck == null)
 				{
 					Core.MainWindow.SelectLastUsedDeck();
@@ -595,6 +603,23 @@ namespace Hearthstone_Deck_Tracker
 			catch(Exception ex)
 			{
 				Log.Error(ex);
+			}
+		}
+
+		private async Task UploadHearthStatsAsync(Deck selectedDeck)
+		{
+			if(HearthStatsAPI.IsLoggedIn && Config.Instance.HearthStatsAutoUploadNewGames)
+			{
+				Log.Info("Waiting for game mode detection...");
+				await _game.GameModeDetection();
+				Log.Info("Detected game mode, continuing.");
+				Log.Info("Waiting for game mode to be saved to game...");
+				await GameModeSaved(15);
+				Log.Info("Game mode was saved, continuing.");
+				if(_game.CurrentGameMode == Arena)
+					HearthStatsManager.UploadArenaMatchAsync(_lastGame, selectedDeck, background: true);
+				else if(_game.CurrentGameMode != Brawl)
+					HearthStatsManager.UploadMatchAsync(_lastGame, selectedDeck, background: true);
 			}
 		}
 #pragma warning restore 4014
