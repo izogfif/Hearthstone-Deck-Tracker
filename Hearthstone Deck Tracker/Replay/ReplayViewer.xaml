@@ -110,6 +110,29 @@
         <controls:Arrow x:Name="AttackArrow" Stroke="Red" StrokeThickness="2.5" HeadHeight="10" HeadWidth="12" Visibility="Collapsed" Panel.ZIndex="1" />
         <controls:Arrow x:Name="PlayArrow" Stroke="Black" StrokeThickness="2.5" HeadHeight="10" HeadWidth="12" Visibility="Collapsed" Panel.ZIndex="1" />
         <DockPanel>
+            <StatusBar DockPanel.Dock="Top" Height="24" Background="Red" Name="StatusBar">
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <DockPanel/>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem DockPanel.Dock="Right">
+                    <Button VerticalAlignment="Center" Height="24" Width="24" Style="{DynamicResource MetroCircleButtonStyle}" 
+                            Background="Transparent" BorderThickness="0" Click="BtnCloseStatusBar_OnClick" ToolTip="Close">
+                        <Button.Content>
+                            <Rectangle Width="8" Height="8">
+                                <Rectangle.Fill>
+                                    <VisualBrush Visual="{StaticResource appbar_close_white}" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Button.Content>
+                    </Button>
+                </StatusBarItem>
+                <StatusBarItem>
+                    <TextBlock Foreground="White" Text="This replay is currently unsupported by HSReplay.net. Displaying in legacy viewer." FontWeight="SemiBold" Margin="5,0,0,0"/>
+                </StatusBarItem>
+            </StatusBar>
+        <DockPanel>
             <DockPanel Width="Auto">
                 <DataGrid Name="DataGridKeyPoints" SelectedCellsChanged="DataGridKeyPoints_OnSelectedCellsChanged" HorizontalScrollBarVisibility="Disabled" HeadersVisibility="None" IsReadOnly="True" PreviewKeyDown="DataGridKeyPoints_OnPreviewKeyDown">
                     <DataGrid.Columns>
@@ -361,6 +384,7 @@
                     </Border>
                 </Grid>
             </DockPanel>
+         </DockPanel>
         </DockPanel>
     </Grid>
 </controls1:MetroWindow>
