@@ -120,7 +120,8 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 				var file = new FileInfo(fileName);
 				var hsBuild = BuildDates.GetByDate(file.LastWriteTime);
 				var metaData = hsBuild != null ? new GameMetaData() {HearthstoneBuild = hsBuild} : null;
-				var result = await LogUploader.Upload(log.ToArray(), metaData, null);
+				var gameStats = hsBuild != null ? new GameStats() {StartTime = file.LastWriteTime} : null;
+				var result = await LogUploader.Upload(log.ToArray(), metaData, gameStats);
 				if(result.Success)
 					Helper.TryOpenUrl(new HsReplayInfo(result.ReplayId).Url);
 				else
