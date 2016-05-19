@@ -96,9 +96,9 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			return token;
 		}
 
-		private static async Task<string> GetAccountUrl() => BaseApiUrl + "/agents/upload_token/" + await GetUploadToken();
+		private static async Task<string> GetAccountUrl() => $"{BaseApiUrl}/agents/upload_token/{await GetUploadToken()}/";
 
-		private static async Task<string> GetClaimAccountUrl() => $"{BaseApiUrl}/agents/{ApiKey}/attach_upload_token/{await GetUploadToken()}";
+		private static async Task<string> GetClaimAccountUrl() => $"{BaseApiUrl}/agents/{ApiKey}/attach_upload_token/{await GetUploadToken()}/";
 
 		public static async Task ClaimAccount()
 		{
