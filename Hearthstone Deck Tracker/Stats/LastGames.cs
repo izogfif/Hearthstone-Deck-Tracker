@@ -128,7 +128,11 @@ namespace Hearthstone_Deck_Tracker.Stats
 		private static List<GameInfo> Load()
 		{
 			if(!File.Exists(FilePath))
-				return new List<GameInfo>();
+			{
+				return DeckStatsList.Instance.DeckStats.SelectMany(x => x.Games)
+					.Where(x => x.HasReplayFile).OrderByDescending(x => x.StartTime).Take(10).Select(
+						x => new GameInfo { DeckId = x.DeckId, GameId = x.GameId}).ToList();
+			}
 			try
 			{
 				return XmlManager<List<GameInfo>>.Load(FilePath);
