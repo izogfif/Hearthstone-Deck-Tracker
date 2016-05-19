@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.HsReplay.Converter;
 using Hearthstone_Deck_Tracker.Stats;
 
 namespace Hearthstone_Deck_Tracker.HsReplay.API
@@ -51,7 +52,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public string TimeStamp => _game?.StartTime != DateTime.MinValue ? _game?.StartTime.ToString("o") : null;
 
 		[ApiField("hearthstone_build")]
-		public int? HearthstoneBuild => _gameMetaData?.HearthstoneBuild;
+		public int? HearthstoneBuild => _gameMetaData?.HearthstoneBuild ?? _game?.HearthstoneBuild ?? (_game != null ? BuildDates.GetByDate(_game.StartTime) : null);
 
 		[ApiField("game_type")]
 		public int? BnetGameType => _game != null ? (int)HearthDbConverter.GetGameType(_game.GameMode, _game.Format) : (int?)null;
