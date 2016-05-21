@@ -127,11 +127,12 @@ namespace Hearthstone_Deck_Tracker
 		}
 
 		private bool _savedReplay;
-		private void SaveReplays()
+		private async void SaveReplays()
 		{
 			if(!_savedReplay && _game.CurrentGameStats != null)
 			{
 				_savedReplay = true;
+				await LogIsComplete();
 				var powerLog = new List<string>();
 				foreach(var stored in _game.StoredPowerLogs.Where(x => x.Item1 == _game.MetaData.GameId))
 					powerLog.AddRange(stored.Item2);
@@ -151,6 +152,30 @@ namespace Hearthstone_Deck_Tracker
 					LogUploader.Upload(powerLog.ToArray(), _game.MetaData, _game.CurrentGameStats).Forget();
 			}
 		}
+
+		private async Task LogIsComplete()
+		{
+			if(LogContainsGoldRewardState)
+				return;
+			Log.Info("GOLD_REWARD_STATE not found");
+			await Task.Delay(500);
+			if(LogContainsStateComplete)
+				return;
+			Log.Info("STATE COMPLETE not found");
+			for(var i = 0; i < 5; i++)
+			{
+				await Task.Delay(1000);
+				if(LogContainsStateComplete)
+					break;
+				Log.Info($"Waiting for STATE COMPLETE... ({i})");
+			}
+		}
+
+		private bool LogContainsGoldRewardState
+			=> _game?.PowerLog?.Skip(Math.Max(0, _game.PowerLog.Count - 10)).Count(x => x.Contains("tag=GOLD_REWARD_STATE value=1")) == 2;
+
+		private bool LogContainsStateComplete
+			=> _game?.PowerLog?.Skip(Math.Max(0, _game.PowerLog.Count - 10)).Any(x => x.Contains("tag=STATE value=COMPLETE")) ?? false;
 
 		public void HandleConcede()
 		{
