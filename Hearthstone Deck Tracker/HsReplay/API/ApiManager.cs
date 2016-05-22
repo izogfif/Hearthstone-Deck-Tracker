@@ -66,7 +66,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			try
 			{
 				var content = JsonConvert.SerializeObject(new {api_key = ApiKey});
-				var response = await Web.PostJsonAsync($"{GetUploadTokenUrl}/", content, false);
+				var response = await Web.PostJsonAsync($"{TokensUrl}/", content, false);
 				using(var responseStream = response.GetResponseStream())
 				using(var reader = new StreamReader(responseStream))
 				{
@@ -97,7 +97,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			return token;
 		}
 
-		private static async Task<string> GetAccountUrl() => $"{BaseApiUrl}/agents/upload_token/{await GetUploadToken()}/";
+		private static async Task<string> GetAccountUrl() => $"{TokensUrl}/{await GetUploadToken()}/";
 
 		private static async Task<string> GetClaimAccountUrl() => $"{BaseApiUrl}/agents/{ApiKey}/attach_upload_token/{await GetUploadToken()}/";
 
@@ -118,8 +118,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public static async Task UpdateAccountStatus()
 		{
 			Log.Info("Checking account status...");
-			var response = await Web.GetAsync(await GetAccountUrl(), ApiKeyHeader);
-			var statusMsg = $"Response={response.StatusCode}";
+			var response = await Web.GetAsync(await GetAccountUrl());
 			if(response.StatusCode == HttpStatusCode.OK)
 			{
 				try
@@ -128,13 +127,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					using(var reader = new StreamReader(responseStream))
 					{
 						dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
-						var status = (string)json.status;
-						statusMsg += " Status=" + status;
-						Account.BattleTag = (string)json.battle_tag;
-						statusMsg += " BattleTag=" + Account.BattleTag;
-						AccountStatus accountStatus;
-						if(Enum.TryParse(status, true, out accountStatus))
-							Account.Status = accountStatus;
+						var user = json.user;
+						Account.Id = user != null ? user.id : 0;
+						Account.Username = user != null ? user.username : string.Empty;
+						Account.Status = user != null ? AccountStatus.Registered : AccountStatus.Anonymous;
 					}
 				}
 				catch(Exception e)
@@ -142,7 +138,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					Log.Error(e);
 				}
 			}
-			Log.Info(statusMsg);
+			Log.Info($"Response={response.StatusCode}, Id={Account.Id}, Username={Account.Username}, Status={Account.Status}");
 		}
 	}
 }

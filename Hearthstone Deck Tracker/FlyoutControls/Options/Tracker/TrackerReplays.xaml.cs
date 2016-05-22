@@ -33,7 +33,7 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 		public Visibility TextClaimVisibility => Account.Status == Anonymous ? Visible : Collapsed;
 		public bool TextUnclaimIsEnabled => Account.Status != Anonymous;
 		public AccountStatus AccountStatus => Account.Status;
-		public string BattleTag => Account.Status == Anonymous ? string.Empty : $"({Account.BattleTag})";
+		public string BattleTag => Account.Status == Anonymous ? string.Empty : $"({Account.Username})";
 		public string UploadToken => ApiManager.UploadToken;
 		private const string ButtonTextClaim = "Claim Account";
 		private const string ButtonTextWaiting = "Waiting for HSReplay.net...";

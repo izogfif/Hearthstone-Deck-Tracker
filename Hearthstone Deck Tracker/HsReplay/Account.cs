@@ -5,6 +5,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 	internal class Account
 	{
 		public static AccountStatus Status { get; set; }
-		public static string BattleTag { get; set; }
+		public static string Username { get; set; }
+		public static int Id { get; set; }
 	}
 }
