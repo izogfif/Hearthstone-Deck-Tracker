@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using HearthMirror.Enums;
@@ -56,6 +57,7 @@ namespace Hearthstone_Deck_Tracker
 		public static void Initialize()
 		{
 			Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 			var newUser = !Directory.Exists(Config.AppDataPath);
 			Config.Load();
 			Log.Initialize();
