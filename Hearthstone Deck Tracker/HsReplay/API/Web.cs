@@ -7,14 +7,21 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 {
 	internal class Web
 	{
+		private const string Post = "POST";
+		private const string Get = "GET";
+		private const string Put = "PUT";
+
 		public static async Task<HttpWebResponse> GetAsync(string url, params Header[] headers)
-			=> await SendWebRequestAsync(CreateRequest(url, "GET"), null, false, headers);
+			=> await SendWebRequestAsync(CreateRequest(url, Get), null, false, headers);
 
 		public static async Task<HttpWebResponse> PostAsync(string url, string data, bool gzip, params Header[] headers)
-			=> await SendWebRequestAsync(CreateRequest(url, "POST"), data, gzip, headers);
+			=> await SendWebRequestAsync(CreateRequest(url, Post), data, gzip, headers);
+
+		public static async Task<HttpWebResponse> PostJsonAsync(string url, string data, bool gzip, params Header[] headers)
+			=> await SendWebRequestAsync(CreateRequest(url, Post, ContentType.Json), data, gzip, headers);
 
 		public static async Task<HttpWebResponse> PutAsync(string url, string data, params Header[] headers) 
-			=> await SendWebRequestAsync(CreateRequest(url, "PUT"), data, false, headers);
+			=> await SendWebRequestAsync(CreateRequest(url, Put), data, false, headers);
 
 		private static async Task<HttpWebResponse> SendWebRequestAsync(HttpWebRequest request, string data, bool gzip, params Header[] headers)
 		{
@@ -37,13 +44,32 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			return (HttpWebResponse)await request.GetResponseAsync();
 		}
 
-		private static HttpWebRequest CreateRequest(string url, string method)
+		private static HttpWebRequest CreateRequest(string url, string method, ContentType contentType = ContentType.Text)
 		{
 			var request = (HttpWebRequest)WebRequest.Create(url);
-			request.ContentType = "text/plain";
+			request.ContentType = GetContentTypeString(contentType);
 			request.Accept = "application/json";
 			request.Method = method;
 			return request;
 		}
+
+		private static string GetContentTypeString(ContentType contentType)
+		{
+			switch(contentType)
+			{
+				case ContentType.Text:
+					return "text/plain";
+				case ContentType.Json:
+					return "application/json";
+				default:
+					return "text/plain";
+			}
+		}
+	}
+
+	public enum ContentType
+	{
+		Text,
+		Json
 	}
 }

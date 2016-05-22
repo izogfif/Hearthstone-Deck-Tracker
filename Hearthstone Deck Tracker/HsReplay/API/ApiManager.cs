@@ -65,12 +65,13 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			}
 			try
 			{
-				var response = await Web.PostAsync(GenerateUploadTokenUrl, "", false, ApiKeyHeader);
+				var content = JsonConvert.SerializeObject(new {api_key = ApiKey});
+				var response = await Web.PostJsonAsync($"{GetUploadTokenUrl}/", content, false);
 				using(var responseStream = response.GetResponseStream())
 				using(var reader = new StreamReader(responseStream))
 				{
 					dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
-					token = (string)json.single_site_upload_token;
+					token = (string)json.key;
 				}
 				if(string.IsNullOrEmpty(token))
 					throw new Exception("Reponse contained no upload-token.");
