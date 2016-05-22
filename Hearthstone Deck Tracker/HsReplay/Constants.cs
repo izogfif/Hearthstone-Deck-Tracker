@@ -8,7 +8,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 {
 	internal class Constants
 	{
-		public const string BaseUrl = "http://hsreplay.net";
+		public const string BaseUrl = "https://hsreplay.net";
 		public const string BaseUploadUrl = "https://upload.hsreplay.net";
 		private const string BaseApi = "/api/v1";
 		private const string RawUploadApi = "/replay/upload/raw";
