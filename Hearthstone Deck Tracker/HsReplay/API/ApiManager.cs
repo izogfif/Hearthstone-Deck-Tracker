@@ -13,7 +13,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 {
 	internal class ApiManager
 	{
-		private const string ApiKey = "d1050cd9e8ed4ff7853dd109ee428505";
+		private const string ApiKey = "d763d58fc5f94cfba5ce5a7a1dac331f";
 		private const string ApiKeyHeaderName = "x-hsreplay-api-key";
 		private const string ApiUploadTokenHeaderName = "x-hsreplay-upload-token";
 
@@ -99,14 +99,20 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 
 		private static async Task<string> GetAccountUrl() => $"{TokensUrl}/{await GetUploadToken()}/";
 
-		private static async Task<string> GetClaimAccountUrl() => $"{BaseApiUrl}/agents/{ApiKey}/attach_upload_token/{await GetUploadToken()}/";
-
 		public static async Task ClaimAccount()
 		{
 			try
 			{
-				Log.Info("Opening browser to claim account");
-				Process.Start(await GetClaimAccountUrl());
+				var token = await GetUploadToken();
+				Log.Info("Getting claim url...");
+				var response = await Web.PostAsync(ClaimAccountUrl, string.Empty, false, new Header("Authorization", $"Token {token}"));
+				using(var responseStream = response.GetResponseStream())
+				using(var reader = new StreamReader(responseStream))
+				{
+					dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
+					Log.Info("Opening browser to claim account...");
+					Process.Start($"{BaseUrl}{json.url}");
+				}
 			}
 			catch(Exception e)
 			{

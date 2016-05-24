@@ -13,6 +13,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 		private const string BaseApi = "/api/v1";
 		private const string RawUploadApi = "/replay/upload/raw";
 		private const string TokenApi = "/tokens";
+		private const string ClaimAccountApi = "/claim_account/";
 		private const string UploadTokenFile = "hsreplay_token";
 
 		public static string BaseApiUrl => BaseUrl + BaseApi;
@@ -20,5 +21,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 		public static string UploadUrl => BaseUploadApiUrl + RawUploadApi;
 		public static string TokensUrl => BaseApiUrl + TokenApi;
 		public static string UploadTokenFilePath => Path.Combine(Config.Instance.DataDir, UploadTokenFile);
+		public static string ClaimAccountUrl => BaseApiUrl + ClaimAccountApi;
 	}
 }
