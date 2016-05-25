@@ -138,12 +138,6 @@ namespace Hearthstone_Deck_Tracker
 					powerLog.AddRange(stored.Item2);
 				powerLog.AddRange(_game.PowerLog);
 
-				if(_usePostGameLegendRank)
-				{
-					_game.CurrentGameStats.LegendRank = _game.MetaData.LegendRank;
-					_usePostGameLegendRank = false;
-				}
-
 				if(Config.Instance.RecordReplays && RecordCurrentGameMode && _game.Entities.Count > 0 && !_game.SavedReplay
 					&& _game.CurrentGameStats.ReplayFile == null)
 					_game.CurrentGameStats.ReplayFile = ReplayMaker.SaveToDisk(powerLog);
@@ -614,8 +608,7 @@ namespace Hearthstone_Deck_Tracker
 			if(_game.StoredGameStats != null)
 				_game.CurrentGameStats.StartTime = _game.StoredGameStats.StartTime;
 
-			if(!_usePostGameLegendRank && _game.CurrentGameMode != None)
-				SaveReplays();
+			SaveReplays();
 
 				if(Config.Instance.ReselectLastDeckUsed && selectedDeck == null)
 				{
@@ -635,9 +628,6 @@ namespace Hearthstone_Deck_Tracker
 		{
 			if(HearthStatsAPI.IsLoggedIn && Config.Instance.HearthStatsAutoUploadNewGames)
 			{
-				Log.Info("Waiting for game mode detection...");
-				await _game.GameModeDetection();
-				Log.Info("Detected game mode, continuing.");
 				Log.Info("Waiting for game mode to be saved to game...");
 				await GameModeSaved(15);
 				Log.Info("Game mode was saved, continuing.");
