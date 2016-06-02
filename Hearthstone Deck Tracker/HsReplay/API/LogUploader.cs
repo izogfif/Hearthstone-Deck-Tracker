@@ -34,6 +34,8 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			UploadResult result = null;
 			try
 			{
+				var tsParser = new TimeStampParser(game?.StartTime ?? DateTime.MinValue);
+				logLines = logLines.Select(tsParser.Parse).ToArray();
 				var metaData = UploadMetaData.Generate(logLines, gameMetaData, game);
 				var url = UploadUrl + "?" + metaData.ToQueryString();
 				Log.Info("Url: " + url);
