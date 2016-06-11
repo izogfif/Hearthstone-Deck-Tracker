@@ -11,7 +11,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 		public const string BaseUrl = "http://hsreplay.net";
 		public const string BaseUploadUrl = "https://upload.hsreplay.net";
 		private const string BaseApi = "/api/v1";
-		private const string RawUploadApi = "/replay/upload/raw";
+		private const string RawUploadApi = "/replay/upload/powerlog";
 		private const string TokenApi = "/tokens";
 		private const string ClaimAccountApi = "/claim_account/";
 		private const string UploadTokenFile = "hsreplay_token";

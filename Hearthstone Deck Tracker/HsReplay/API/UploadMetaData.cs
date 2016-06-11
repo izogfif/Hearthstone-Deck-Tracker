@@ -15,12 +15,6 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		private readonly GameStats _game;
 		private readonly GameMetaData _gameMetaData;
 		public readonly string[] Log;
-		//[ApiField("friendly_player_id")]
-		//public string FriendlyPlayerId { get; set; }
-
-		//[ApiField("scenario_id")]
-		//public string ScenarioId { get; set; }
-
 
 		private UploadMetaData(string[] log, GameMetaData gameMetaData, GameStats game)
 		{
@@ -30,22 +24,22 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			FillPlayerData();
 		}
 
-		[ApiField("game_server_address")]
+		[ApiField("server_ip")]
 		public string ServerIp => _gameMetaData?.ServerAddress?.Split(':').FirstOrDefault();
 
-		[ApiField("game_server_port")]
+		[ApiField("server_port")]
 		public string ServerPort => _gameMetaData?.ServerAddress?.Split(':').LastOrDefault();
 
-		[ApiField("game_server_game_id")]
+		[ApiField("game_id")]
 		public string GameId => _gameMetaData?.GameId;
 
-		[ApiField("game_server_client_id")]
+		[ApiField("client_id")]
 		public string ClientId => _gameMetaData?.ClientId;
 
-		[ApiField("game_server_reconnecting")]
+		[ApiField("reconnecting")]
 		public string Reconnected => _gameMetaData?.Reconnected ?? false ? "true" : null;
 
-		[ApiField("game_server_spectate_key")]
+		[ApiField("spectate_key")]
 		public string SpectateKey => _gameMetaData?.SpectateKey;
 
 		[ApiField("match_start_timestamp")]
@@ -57,26 +51,38 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		[ApiField("game_type")]
 		public int? BnetGameType => _game != null ? (int)HearthDbConverter.GetGameType(_game.GameMode, _game.Format) : (int?)null;
 
-		[ApiField("is_spectated_game")]
+		[ApiField("spectator_mode")]
 		public string IsSpectatedGame => _game?.GameMode == GameMode.Spectator ? "true" : null;
 
-		[ApiField("player_1_rank")]
+		[ApiField("friendly_player")]
+		public int? FriendlyPlayerId => _game?.FriendlyPlayerId;
+
+		[ApiField("scenario_id")]
+		public int? ScenarioId => _game?.ScenarioId;
+
+		[ApiField("player1_rank")]
 		public int? Player1Rank { get; set; }
 
-		[ApiField("player_1_legend_rank")]
+		[ApiField("player1_legend_rank")]
 		public int? Player1LegendRank { get; set; }
 
-		[ApiField("player_1_deck_list")]
+		[ApiField("player1_deck")]
 		public string Player1DeckList { get; set; }
 
-		[ApiField("player_2_rank")]
+		[ApiField("player1_cardback")]
+		public int? Player1Cardback { get; set; }
+
+		[ApiField("player2_rank")]
 		public int? Player2Rank { get; set; }
 
-		[ApiField("player_2_legendrank")]
+		[ApiField("player2_legendrank")]
 		public int? Player2LegendRank { get; set; }
 
-		[ApiField("player_2_deck_list")]
+		[ApiField("player2_deck")]
 		public string Player2DeckList { get; set; }
+
+		[ApiField("player2_cardback")]
+		public int?	 Player2Cardback { get; set; }
 
 		private void FillPlayerData()
 		{
@@ -106,6 +112,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					Player1Rank = _game?.OpponentRank;
 				if(_game?.OpponentCards.Sum(x => x.Count) == 30 && _game?.OpponentCards.Sum(x => x.Unconfirmed) == 0)
 					Player1DeckList = string.Join(",", _game?.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+				if(_game?.PlayerCardbackId > 0)
+					Player1Cardback = _game.PlayerCardbackId;
+				if(_game?.OpponentCardbackId > 0)
+					Player1Cardback = _game.OpponentCardbackId;
 			}
 		}
 
