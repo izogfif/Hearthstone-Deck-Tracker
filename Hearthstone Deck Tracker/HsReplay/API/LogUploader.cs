@@ -45,7 +45,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				using(var reader = new StreamReader(responseStream))
 				{
 					dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
-					string id = json.replay_uuid;
+					string id = json.id;
 					if(string.IsNullOrEmpty(id))
 						throw new Exception("Server returned empty uuid. " + json.msg);
 					result = UploadResult.Successful(id);

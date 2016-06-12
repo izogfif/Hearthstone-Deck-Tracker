@@ -10,10 +10,11 @@ using Hearthstone_Deck_Tracker.Stats;
 
 namespace Hearthstone_Deck_Tracker.HsReplay.API
 {
-	public class UploadMetaData
+	public class UploadMetaData : QueryStringable
 	{
 		private readonly GameStats _game;
 		private readonly GameMetaData _gameMetaData;
+		private int? _friendlyPlayerId;
 		public readonly string[] Log;
 
 		private UploadMetaData(string[] log, GameMetaData gameMetaData, GameStats game)
@@ -55,67 +56,87 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public string IsSpectatedGame => _game?.GameMode == GameMode.Spectator ? "true" : null;
 
 		[ApiField("friendly_player")]
-		public int? FriendlyPlayerId => _game?.FriendlyPlayerId;
+		public int? FriendlyPlayerId => _game?.FriendlyPlayerId ?? _friendlyPlayerId;
 
 		[ApiField("scenario_id")]
 		public int? ScenarioId => _game?.ScenarioId;
 
-		[ApiField("player1_rank")]
-		public int? Player1Rank { get; set; }
+		[ApiField("player_1")]
+		public Player Player1 { get; set; } = new Player();
 
-		[ApiField("player1_legend_rank")]
-		public int? Player1LegendRank { get; set; }
+		[ApiField("player_2")]
+		public Player Player2 { get; set; } = new Player();
 
-		[ApiField("player1_deck")]
-		public string Player1DeckList { get; set; }
 
-		[ApiField("player1_cardback")]
-		public int? Player1Cardback { get; set; }
+		public class Player : QueryStringable
+		{
+			[ApiField("rank")]
+			public int? Rank{ get; set; }
 
-		[ApiField("player2_rank")]
-		public int? Player2Rank { get; set; }
+			[ApiField("legendrank")]
+			public int? LegendRank { get; set; }
 
-		[ApiField("player2_legendrank")]
-		public int? Player2LegendRank { get; set; }
+			[ApiField("stars")]
+			public int? Stars { get; set; }
 
-		[ApiField("player2_deck")]
-		public string Player2DeckList { get; set; }
+			[ApiField("wins")]
+			public int? Wins { get; set; }
 
-		[ApiField("player2_cardback")]
-		public int?	 Player2Cardback { get; set; }
+			[ApiField("losses")]
+			public int? Losses { get; set; }
+
+			[ApiField("deck")]
+			public string DeckList { get; set; }
+
+			[ApiField("cardback")]
+			public int? Cardback { get; set; }
+		}
 
 		private void FillPlayerData()
 		{
-			var player1Name = GetPlayer1Name();
-			if(player1Name == _game?.PlayerName)
+			var friendly = new Player();
+			var opposing = new Player();
+
+			if(_game?.Rank > 0)
+				friendly.Rank = _game.Rank;
+			if(_game?.LegendRank > 0)
+				friendly.LegendRank = _game.LegendRank;
+			if(_game?.PlayerCardbackId > 0)
+				friendly.Cardback = _game.PlayerCardbackId;
+			if(_game?.Stars > 0)
+				friendly.Stars = _game.Stars;
+			if(_game?.PlayerCards.Sum(x => x.Count) == 30 && _game?.PlayerCards.Sum(x => x.Unconfirmed) == 0)
+				friendly.DeckList = string.Join(",", _game?.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+
+			if(_game?.OpponentRank > 0)
+				opposing.Rank = _game.OpponentRank;
+			if(_game?.OpponentLegendRank > 0)
+				opposing.LegendRank = _game.OpponentLegendRank;
+			if(_game?.OpponentCardbackId > 0)
+				opposing.Cardback = _game.OpponentCardbackId;
+			if(_game?.OpponentCards.Sum(x => x.Count) == 30 && _game?.OpponentCards.Sum(x => x.Unconfirmed) == 0)
+				opposing.DeckList = string.Join(",", _game?.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+
+			if(_game?.FriendlyPlayerId > 0)
 			{
-				if(_game?.Rank > 0)
-					Player1Rank = _game?.Rank;
-				if(_game?.LegendRank > 0)
-					Player1LegendRank = _game?.LegendRank;
-				if(_game?.PlayerCards.Sum(x => x.Count) == 30 && _game?.PlayerCards.Sum(x => x.Unconfirmed) == 0)
-					Player1DeckList = string.Join(",", _game?.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
-				if(_game?.OpponentRank > 0)
-					Player2Rank = _game?.OpponentRank;
-				if(_game?.OpponentCards.Sum(x => x.Count) == 30 && _game?.OpponentCards.Sum(x => x.Unconfirmed) == 0)
-					Player2DeckList = string.Join(",", _game?.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
+				Player1 = _game.FriendlyPlayerId == 1 ? friendly : opposing;
+				Player2 = _game.FriendlyPlayerId == 2 ? friendly : opposing;
 			}
-			else if(player1Name == _game?.OpponentName)
+			else
 			{
-				if(_game?.Rank > 0)
-					Player2Rank = _game?.Rank;
-				if(_game?.LegendRank > 0)
-					Player2LegendRank = _game?.LegendRank;
-				if(_game?.PlayerCards.Sum(x => x.Count) == 30 && _game?.PlayerCards.Sum(x => x.Unconfirmed) == 0)
-					Player2DeckList = string.Join(",", _game?.PlayerCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
-				if(_game?.OpponentRank > 0)
-					Player1Rank = _game?.OpponentRank;
-				if(_game?.OpponentCards.Sum(x => x.Count) == 30 && _game?.OpponentCards.Sum(x => x.Unconfirmed) == 0)
-					Player1DeckList = string.Join(",", _game?.OpponentCards.SelectMany(x => Enumerable.Repeat(x.Id, x.Count)));
-				if(_game?.PlayerCardbackId > 0)
-					Player1Cardback = _game.PlayerCardbackId;
-				if(_game?.OpponentCardbackId > 0)
-					Player1Cardback = _game.OpponentCardbackId;
+				var player1Name = GetPlayer1Name();
+				if(player1Name == _game?.PlayerName)
+				{
+					_friendlyPlayerId = 1;
+					Player1 = friendly;
+					Player2 = opposing;
+				}
+				else if(player1Name == _game?.OpponentName)
+				{
+					_friendlyPlayerId = 2;
+					Player2 = friendly;
+					Player1 = opposing;
+				}
 			}
 		}
 
@@ -134,14 +155,30 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public static UploadMetaData Generate(string[] logLines, GameMetaData gameMetaData, GameStats game) 
 			=> new UploadMetaData(logLines, gameMetaData, game);
 
-		public string ToQueryString()
-			=> string.Join("&",
-				GetType().GetProperties().Select(x => new
+	}
+
+	public class QueryStringable
+	{
+		private IEnumerable<string> GetQueryFields()
+		{
+			foreach(var prop in GetType().GetProperties().Where(x => x.GetCustomAttributes(typeof(ApiFieldAttribute), false).Any()))
+			{
+				var value = prop.GetValue(this);
+				if(value == null)
+					continue;
+				var field = ((ApiFieldAttribute)prop.GetCustomAttributes(typeof(ApiFieldAttribute), false).First()).Name;
+				var sub = value as QueryStringable;
+				if(sub != null)
 				{
-					Field = ((ApiFieldAttribute) x.GetCustomAttributes(typeof(ApiFieldAttribute), false).Single()).Name,
-					Value = x.GetValue(this)
-				})
-				.Where(x => x.Value != null).Select(x => $"{x.Field}={HttpUtility.UrlEncode(x.Value.ToString())}"));
+					foreach(var subField in sub.GetQueryFields())
+						yield return $"{field}.{subField}";
+				}
+				else
+					yield return $"{field}={HttpUtility.UrlEncode(value.ToString())}";
+			}
+		}
+
+		public string ToQueryString() => string.Join("&", GetQueryFields());
 	}
 
 	public class ApiFieldAttribute : Attribute
