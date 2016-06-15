@@ -97,7 +97,6 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 		private void TreeViewItemTrackerReplays_OnSelected(object sender, RoutedEventArgs e)
 		{
 			ContentControlOptions.Content = OptionsTrackerReplays;
-			OptionsTrackerReplays.CheckForAccountUpdateAsync().Forget();
 		}
 	}
 }

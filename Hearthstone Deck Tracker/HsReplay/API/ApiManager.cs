@@ -19,49 +19,11 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public static Header ApiKeyHeader => new Header(ApiKeyHeaderName, ApiKey);
 		public static async Task<Header> GetUploadTokenHeader() => new Header("Authorization", "Token " + await GetUploadToken());
 
-
-		internal static void DeleteUploadToken()
-		{
-			if(File.Exists(UploadTokenFilePath))
-			{
-				try
-				{
-					File.Delete(UploadTokenFilePath);
-					_uploadToken = null;
-				}
-				catch(Exception e)
-				{
-					Log.Error(e);
-				}
-			}
-		}
-
-		internal static string UploadToken => _uploadToken;
-
-		private static string _uploadToken;
 		private static async Task<string> GetUploadToken()
 		{
-			if(!string.IsNullOrEmpty(_uploadToken))
-				return _uploadToken;
+			if(!string.IsNullOrEmpty(Account.Instance.UploadToken))
+				return Account.Instance.UploadToken;
 			string token;
-			try
-			{
-				if(File.Exists(UploadTokenFilePath))
-				{
-					using(var reader = new StreamReader(UploadTokenFilePath))
-						token = reader.ReadToEnd();
-					if(!string.IsNullOrEmpty(token))
-					{
-						Log.Info("Loaded upload-token from file.");
-						_uploadToken = token;
-						return token;
-					}
-				}
-			}
-			catch(Exception e)
-			{
-				Log.Error(e);
-			}
 			try
 			{
 				var content = JsonConvert.SerializeObject(new {api_key = ApiKey});
@@ -80,19 +42,9 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				Log.Error(e);
 				throw new Exception("Webrequest to obtain upload-token failed.", e);
 			}
-			try
-			{
-				using(var writer = new StreamWriter(UploadTokenFilePath))
-					writer.Write(token);
-			}
-			catch(Exception e)
-			{
-				Log.Error(e);
-			}
-			if(string.IsNullOrEmpty(token))
-				throw new Exception("Could not obtain an upload-token.");
+			Account.Instance.UploadToken = token;
+			Account.Save();
 			Log.Info("Obtained new upload-token.");
-			_uploadToken = token;
 			return token;
 		}
 
@@ -133,9 +85,11 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					{
 						dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
 						var user = json.user;
-						Account.Id = user != null ? user.id : 0;
-						Account.Username = user != null ? user.username : string.Empty;
-						Account.Status = user != null ? AccountStatus.Registered : AccountStatus.Anonymous;
+						Account.Instance.Id = user != null ? user.id : 0;
+						Account.Instance.Username = user != null ? user.username : string.Empty;
+						Account.Instance.Status = user != null ? AccountStatus.Registered : AccountStatus.Anonymous;
+						Account.Instance.LastUpdated = DateTime.Now;
+						Account.Save();
 					}
 				}
 				catch(Exception e)
@@ -143,7 +97,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					Log.Error(e);
 				}
 			}
-			Log.Info($"Response={response.StatusCode}, Id={Account.Id}, Username={Account.Username}, Status={Account.Status}");
+			Log.Info($"Response={response.StatusCode}, Id={Account.Instance.Id}, Username={Account.Instance.Username}, Status={Account.Instance.Status}");
 		}
 	}
 }

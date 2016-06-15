@@ -30,11 +30,11 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 			InitializeComponent();
 		}
 
-		public Visibility TextClaimVisibility => Account.Status == Anonymous ? Visible : Collapsed;
-		public bool TextUnclaimIsEnabled => Account.Status != Anonymous;
-		public AccountStatus AccountStatus => Account.Status;
-		public string BattleTag => Account.Status == Anonymous ? string.Empty : $"({Account.Username})";
-		public string UploadToken => ApiManager.UploadToken;
+		public Visibility TextClaimVisibility => Account.Instance.Status == Anonymous ? Visible : Collapsed;
+		public bool TextUnclaimIsEnabled => Account.Instance.Status != Anonymous;
+		public AccountStatus AccountStatus => Account.Instance.Status;
+		public string BattleTag => Account.Instance.Status == Anonymous ? string.Empty : $"({Account.Instance.Username})";
+		public string UploadToken => Account.Instance.UploadToken;
 		private const string ButtonTextClaim = "Claim Account";
 		private const string ButtonTextWaiting = "Waiting for HSReplay.net...";
 
@@ -69,7 +69,7 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 			{
 				Log.Debug($"Checking account info... try #{i+1}");
 				await ApiManager.UpdateAccountStatus();
-				if(targetStatus == null || Account.Status == targetStatus)
+				if(targetStatus == null || Account.Instance.Status == targetStatus)
 				{
 					Log.Debug("Found updated account status");
 					Update();
@@ -83,7 +83,7 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 
 		private void ButtonUnclaimAccount_OnClick(object sender, RoutedEventArgs e)
 		{
-			ApiManager.DeleteUploadToken();
+			Account.DeleteCacheFile();
 			CheckForAccountUpdateAsync(Anonymous).Forget();
 		}
 

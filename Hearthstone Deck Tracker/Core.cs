@@ -147,12 +147,10 @@ namespace Hearthstone_Deck_Tracker
 			if(Helper.HearthstoneDirExists && Config.Instance.StartHearthstoneWithHDT && !Game.IsRunning)
 				Helper.StartHearthstoneAsync();
 
-			HsReplayManager.Setup().Forget();
+			if((DateTime.Now - Account.Instance.LastUpdated).TotalDays >= 7)
+				ApiManager.UpdateAccountStatus().Forget();
 
 			Initialized = true;
-
-			//TODO: remove for launch (cache instead)
-			ApiManager.UpdateAccountStatus().Forget();
 
 			Influx.OnAppStart(Helper.GetCurrentVersion(), loginType, newUser);
 		}

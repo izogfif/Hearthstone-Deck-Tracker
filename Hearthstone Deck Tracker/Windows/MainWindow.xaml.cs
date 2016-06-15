@@ -426,8 +426,8 @@ namespace Hearthstone_Deck_Tracker.Windows
 
 		public Visibility IntroductionLabelVisibility => DeckList.Instance.Decks.Any() ? Collapsed : Visible;
 
-		public Visibility MenuItemReplayClaimAccountVisibility => Account.Status == AccountStatus.Anonymous ? Visible : Collapsed;
-		public Visibility MenuItemReplayMyAccountVisibility => Account.Status == AccountStatus.Anonymous ? Collapsed : Visible;
+		public Visibility MenuItemReplayClaimAccountVisibility => Account.Instance.Status == AccountStatus.Anonymous ? Visible : Collapsed;
+		public Visibility MenuItemReplayMyAccountVisibility => Account.Instance.Status == AccountStatus.Anonymous ? Collapsed : Visible;
 
 		public void UpdateIntroLabelVisibility() => OnPropertyChanged(nameof(IntroductionLabelVisibility));
 
