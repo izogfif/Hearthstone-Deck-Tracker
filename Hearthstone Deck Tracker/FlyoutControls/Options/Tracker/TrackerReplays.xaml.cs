@@ -34,7 +34,6 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 		public bool TextUnclaimIsEnabled => Account.Instance.Status != Anonymous;
 		public AccountStatus AccountStatus => Account.Instance.Status;
 		public string BattleTag => Account.Instance.Status == Anonymous ? string.Empty : $"({Account.Instance.Username})";
-		public string UploadToken => Account.Instance.UploadToken;
 		private const string ButtonTextClaim = "Claim Account";
 		private const string ButtonTextWaiting = "Waiting for HSReplay.net...";
 
@@ -44,7 +43,6 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker
 			OnPropertyChanged(nameof(TextUnclaimIsEnabled));
 			OnPropertyChanged(nameof(AccountStatus));
 			OnPropertyChanged(nameof(BattleTag));
-			OnPropertyChanged(nameof(UploadToken));
 		}
 
 		private async void ButtonClaimAccount_OnClick(object sender, RoutedEventArgs e)
