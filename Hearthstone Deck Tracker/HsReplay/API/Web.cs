@@ -27,6 +27,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		{
 			foreach(var header in headers)
 				request.Headers.Add(header.Name, header.Value);
+			request.Headers.Add(ApiManager.ApiKeyHeader.Name, ApiManager.ApiKeyHeader.Value);
 			request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 			if(data == null)
 				return (HttpWebResponse)await request.GetResponseAsync();

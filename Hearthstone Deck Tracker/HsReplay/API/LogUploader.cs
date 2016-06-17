@@ -44,7 +44,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				var metaData = UploadMetaData.Generate(logLines, gameMetaData, game);
 				var url = UploadUrl + "?" + metaData.ToQueryString();
 				Log.Info("Url: " + url);
-				var response = await Web.PostAsync(url, log, true, ApiManager.ApiKeyHeader, await ApiManager.GetUploadTokenHeader());
+				var response = await Web.PostAsync(url, log, true, await ApiManager.GetUploadTokenHeader());
 				Log.Info(response.StatusCode.ToString());
 				using(var responseStream = response.GetResponseStream())
 				using(var reader = new StreamReader(responseStream))

@@ -14,7 +14,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 	internal class ApiManager
 	{
 		private const string ApiKey = "089b2bc6-3c26-4aab-adbe-bcfd5bb48671";
-		private const string ApiKeyHeaderName = "x-hsreplay-api-key";
+		private const string ApiKeyHeaderName = "X-Api-Key";
 
 		public static Header ApiKeyHeader => new Header(ApiKeyHeaderName, ApiKey);
 		public static async Task<Header> GetUploadTokenHeader() => new Header("Authorization", "Token " + await GetUploadToken());
