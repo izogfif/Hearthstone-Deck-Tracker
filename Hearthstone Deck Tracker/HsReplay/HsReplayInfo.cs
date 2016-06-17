@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Hearthstone_Deck_Tracker.HsReplay
+﻿namespace Hearthstone_Deck_Tracker.HsReplay
 {
 	public class HsReplayInfo
 	{
@@ -20,8 +14,12 @@ namespace Hearthstone_Deck_Tracker.HsReplay
 
 		public string Id { get; set; }
 
+		public int UploadTries { get; set; }
+
 		public bool Uploaded => !string.IsNullOrEmpty(Id);
 
 		public string Url => $"{Constants.BaseUrl}/games/replay/{Id}";
+
+		public void UploadTry() => UploadTries++;
 	}
 }

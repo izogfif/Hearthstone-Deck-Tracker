@@ -34,6 +34,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			UploadResult result = null;
 			try
 			{
+				game?.HsReplay.UploadTry();
 				var tsParser = new TimeStampParser(game?.StartTime ?? DateTime.MinValue);
 				logLines = logLines.Select(tsParser.Parse).ToArray();
 				var metaData = UploadMetaData.Generate(logLines, gameMetaData, game);
@@ -45,9 +46,9 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 				using(var reader = new StreamReader(responseStream))
 				{
 					dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
-					string id = json.id;
+					string id = json.shortid;
 					if(string.IsNullOrEmpty(id))
-						throw new Exception("Server returned empty uuid. " + json.msg);
+						throw new Exception("Server returned empty replay id. " + json.msg);
 					result = UploadResult.Successful(id);
 					if(game != null)
 					{
