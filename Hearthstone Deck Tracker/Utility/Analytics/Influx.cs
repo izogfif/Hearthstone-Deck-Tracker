@@ -55,5 +55,19 @@ namespace Hearthstone_Deck_Tracker.Utility.Analytics
 				Log.Debug(ex.ToString());
 			}
 		}
+
+		public static void OnGameUpload(int tries)
+		{
+			if(!Config.Instance.GoogleAnalytics)
+				return;
+			WritePoint(new InfluxPointBuilder("hdt_hsreplay_upload_counter", false).Field("tries", tries).Build());
+		}
+
+		public static void OnGameUploadFailed(bool emptyId, WebExceptionStatus status = WebExceptionStatus.UnknownError)
+		{
+			if(!Config.Instance.GoogleAnalytics)
+				return;
+			WritePoint(new InfluxPointBuilder("hdt_hsreplay_upload_failed_counter").Tag("empty_id", emptyId).Tag("status", status).Build());
+		}
 	}
 }

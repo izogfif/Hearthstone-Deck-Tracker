@@ -4,9 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Hearthstone_Deck_Tracker.Hearthstone;
 using Hearthstone_Deck_Tracker.Stats;
+using Hearthstone_Deck_Tracker.Utility.Analytics;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 using Newtonsoft.Json;
 using static Hearthstone_Deck_Tracker.HsReplay.Constants;
@@ -32,9 +34,11 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 			InProgress.Add(item);
 			Log.Info($"Uploading {item.Hash}...");
 			UploadResult result = null;
+			var emptyId = false;
 			try
 			{
 				game?.HsReplay.UploadTry();
+				Influx.OnGameUpload(game?.HsReplay.UploadTries ?? 1);
 				var tsParser = new TimeStampParser(game?.StartTime ?? DateTime.MinValue);
 				logLines = logLines.Select(tsParser.Parse).ToArray();
 				var metaData = UploadMetaData.Generate(logLines, gameMetaData, game);
@@ -48,7 +52,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					dynamic json = JsonConvert.DeserializeObject(reader.ReadToEnd());
 					string id = json.shortid;
 					if(string.IsNullOrEmpty(id))
+					{
+						emptyId = true;
 						throw new Exception("Server returned empty replay id. " + json.msg);
+					}
 					result = UploadResult.Successful(id);
 					if(game != null)
 					{
@@ -60,9 +67,15 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 					}
 				}
 			}
+			catch(WebException e)
+			{
+				Log.Error(e);
+				Influx.OnGameUploadFailed(emptyId, e.Status);
+			}
 			catch(Exception e)
 			{
 				Log.Error(e);
+				Influx.OnGameUploadFailed(emptyId);
 			}
 			if(result == null)
 				result = UploadResult.Failed;
