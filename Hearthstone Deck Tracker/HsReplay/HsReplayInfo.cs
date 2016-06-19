@@ -7,18 +7,18 @@
 			
 		}
 
-		public HsReplayInfo(string id)
+		public HsReplayInfo(string uploadId)
 		{
-			Id = id;
+			UploadId = uploadId;
 		}
 
-		public string Id { get; set; }
+		public string UploadId { get; set; }
 
 		public int UploadTries { get; set; }
 
-		public bool Uploaded => !string.IsNullOrEmpty(Id);
+		public bool Uploaded => !string.IsNullOrEmpty(UploadId);
 
-		public string Url => $"{Constants.BaseUrl}/games/replay/{Id}";
+		public string Url => $"{Constants.BaseUrl}/uploads/upload/{UploadId}";
 
 		public void UploadTry() => UploadTries++;
 	}
