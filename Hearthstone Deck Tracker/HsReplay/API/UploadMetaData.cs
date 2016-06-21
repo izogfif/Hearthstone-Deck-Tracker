@@ -56,7 +56,7 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public string IsSpectatedGame => _game?.GameMode == GameMode.Spectator ? "true" : null;
 
 		[ApiField("friendly_player")]
-		public int? FriendlyPlayerId => _game?.FriendlyPlayerId ?? _friendlyPlayerId;
+		public int? FriendlyPlayerId => _game?.FriendlyPlayerId > 0 ? _game.FriendlyPlayerId : (_friendlyPlayerId > 0 ? _friendlyPlayerId : null);
 
 		[ApiField("scenario_id")]
 		public int? ScenarioId => _game?.ScenarioId;
