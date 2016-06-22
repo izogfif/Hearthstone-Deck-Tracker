@@ -75,10 +75,10 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 		public static async Task UpdateAccountStatus()
 		{
 			Log.Info("Checking account status...");
-			var response = await Web.GetAsync(await GetAccountUrl());
-			if(response.StatusCode == HttpStatusCode.OK)
+			try
 			{
-				try
+				var response = await Web.GetAsync(await GetAccountUrl());
+				if(response.StatusCode == HttpStatusCode.OK)
 				{
 					using(var responseStream = response.GetResponseStream())
 					using(var reader = new StreamReader(responseStream))
@@ -92,12 +92,12 @@ namespace Hearthstone_Deck_Tracker.HsReplay.API
 						Account.Save();
 					}
 				}
-				catch(Exception e)
-				{
-					Log.Error(e);
-				}
+				Log.Info($"Response={response.StatusCode}, Id={Account.Instance.Id}, Username={Account.Instance.Username}, Status={Account.Instance.Status}");
 			}
-			Log.Info($"Response={response.StatusCode}, Id={Account.Instance.Id}, Username={Account.Instance.Username}, Status={Account.Instance.Status}");
+			catch(Exception ex)
+			{
+				Log.Error(ex);
+			}
 		}
 	}
 }
