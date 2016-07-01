@@ -630,10 +630,10 @@ namespace Hearthstone_Deck_Tracker
 		public bool OverlaySecretToolTipsOnly = false;
 
 		[DefaultValue(new[] {"Win Rate", "Cards", "Card Counter", "Draw Chances", "Fatigue Counter"})]
-		public string[] PanelOrderOpponent = {"Win Rate", "Cards", "Card Counter", "Draw Chances", "Fatigue Counter"};
+		public string[] PanelOrderOpponent = {"Win Rate", "Cards", "Card Counter", "Draw Chances", "Fatigue Counter", "Total strength", "Dead deathrattle minions counter"};
 
 		[DefaultValue(new[] {"Deck Title", "Wins", "Cards", "Card Counter", "Draw Chances", "Fatigue Counter"})]
-		public string[] PanelOrderPlayer = {"Deck Title", "Wins", "Cards", "Card Counter", "Draw Chances", "Fatigue Counter"};
+		public string[] PanelOrderPlayer = {"Deck Title", "Wins", "Cards", "Card Counter", "Draw Chances", "Fatigue Counter", "Total strength", "Dead deathrattle minions counter"};
 
 		[DefaultValue(88)]
 		public double PlayerDeckHeight = 88;

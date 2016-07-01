@@ -424,7 +424,8 @@ namespace Hearthstone_Deck_Tracker
 					case "CN":
 						return Region.CHINA;
 					default:
-						return Region.UNKNOWN;
+                        return Region.EU; //Works for me
+						//return Region.UNKNOWN;
 				}
 			}
 			catch(Exception ex)

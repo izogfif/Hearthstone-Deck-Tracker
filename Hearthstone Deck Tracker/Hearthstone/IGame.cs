@@ -37,5 +37,8 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 		void Reset(bool resetStats = true);
 		void StoreGameState();
 		string GetStoredPlayerName(int id);
-	}
+        void WriteInLog(string str);
+        void RemoveEntityFromBoard(Entity entity);
+        void PutEntityOnBoard(Entity entity);
+    }
 }

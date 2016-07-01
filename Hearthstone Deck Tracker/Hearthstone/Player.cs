@@ -57,7 +57,70 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 
 		public List<PredictedCard> InDeckPrecitions { get; } = new List<PredictedCard>();
 
-		private DeckState GetDeckState()
+        private Dictionary<string, int> _deadDeathrattleMinions = new Dictionary<string, int>();
+        public Dictionary<string, int> DeadDeathrattleMinions
+        {
+            get
+            {
+                return _deadDeathrattleMinions;
+            }
+        }
+        public void RegisterDeathOfDeathrattleMinion(Entity entity)
+        {
+            if (!entity.IsMinion)
+                return;
+            string[] mechanics = entity.Card.Mechanics;
+            if (!mechanics.Contains("Deathrattle"))
+                return;
+            if (_deadDeathrattleMinions.ContainsKey(entity.LocalizedName))
+                ++_deadDeathrattleMinions[entity.LocalizedName];
+            else
+                _deadDeathrattleMinions.Add(entity.LocalizedName, 1);
+        }
+
+        public void ClearListOfDeadDeathrattleMinions()
+        {
+            _deadDeathrattleMinions.Clear();
+        }
+
+        public int GetTotalStrength(bool IgnoreExhausted)
+        {
+            int nAttack = 0;
+            //Entity weapon = null;
+            //Entity hero = null;
+            foreach (Entity entity in Board)
+            {
+                if (entity.IsMinion)
+                {
+                    if (entity.HasTag(GameTag.FROZEN) || !IgnoreExhausted && entity.HasTag(GameTag.EXHAUSTED) && entity.GetTag(GameTag.EXHAUSTED) == 1)
+                        continue;
+                    nAttack += entity.Attack;
+                    if (entity.HasTag(GameTag.WINDFURY))
+                        nAttack += entity.Attack;
+                    continue;
+                }
+                //if (entity.IsWeapon)
+                //    weapon = entity;
+                //if (entity.IsHero)
+                //    hero = entity;
+            }
+            //if (weapon != null)
+            //{
+            //    if (hero == null)
+            //        throw new InvalidAsynchronousStateException();
+            //    if (!hero.HasTag(GameTag.FROZEN))
+            //    {
+            //        int nHeroAttack = hero.Attack;
+            //        nAttack += nHeroAttack;
+            //        int weaponDurabilityLeft = weapon.GetTag(GameTag.DURABILITY) + weapon.Health;
+            //        if (hero.HasTag(GameTag.WINDFURY) && weaponDurabilityLeft > 1)
+            //            nAttack += nHeroAttack;
+            //    }
+            //}
+            return nAttack;
+        }
+
+        private DeckState GetDeckState()
 		{
 			var createdCardsInDeck =
 				Deck.Where(x => x.HasCardId && (x.Info.Created || x.Info.Stolen))

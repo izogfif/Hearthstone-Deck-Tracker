@@ -100,12 +100,19 @@ namespace Hearthstone_Deck_Tracker
 					case "Win Rate":
 						StackPanelMain.Children.Add(LblWinRateAgainst);
 						break;
+                    case "Total Strength":
+                        StackPanelMain.Children.Add(LblOpponentTotalStrength);
+                        break;
+                    case "Dead deathrattle minions counter":
+                        StackPanelMain.Children.Add(LblOpponentDeadDeathrattleMinions);
+                        break;
 				}
 			}
 			OnPropertyChanged(nameof(OpponentDeckMaxHeight));
 		}
 
-		public void SetOpponentCardCount(int cardCount, int cardsLeftInDeck, bool opponentHasCoin)
+
+        public void SetOpponentCardCount(int cardCount, int cardsLeftInDeck, bool opponentHasCoin)
 		{
 			LblOpponentCardCount.Text = cardCount.ToString();
 			LblOpponentDeckCount.Text = cardsLeftInDeck.ToString();

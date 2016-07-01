@@ -79,6 +79,8 @@ namespace Hearthstone_Deck_Tracker.Windows
 			CanvasPlayerChance.Visibility = Config.Instance.HideDrawChances ? Collapsed : Visible;
 			LblPlayerFatigue.Visibility = Config.Instance.HidePlayerFatigueCount ? Collapsed : Visible;
 			CanvasPlayerCount.Visibility = Config.Instance.HidePlayerCardCount ? Collapsed : Visible;
+            LblPlayerTotalStrength.Visibility = Visible;
+            LblPlayerDeadDeathrattleMinions.Visibility = Visible;
 
 			CanvasOpponentChance.Visibility = Config.Instance.HideOpponentDrawChances ? Collapsed : Visible;
 			LblOpponentFatigue.Visibility = Config.Instance.HideOpponentFatigueCount ? Collapsed : Visible;
@@ -92,8 +94,12 @@ namespace Hearthstone_Deck_Tracker.Windows
 
 			var gameStarted = !_game.IsInMenu && _game.Entities.Count >= 67;
 			SetCardCount(_game.Player.HandCount, !gameStarted ? 30 : _game.Player.DeckCount);
+            UpdatePlayerTotalStrength();
+            UpdatePlayerListOfDeadDeathrattleMinions();
 
-			SetOpponentCardCount(_game.Opponent.HandCount, !gameStarted ? 30 : _game.Opponent.DeckCount);
+            SetOpponentCardCount(_game.Opponent.HandCount, !gameStarted ? 30 : _game.Opponent.DeckCount);
+            UpdateOpponentTotalStrength();
+            UpdateOpponentListOfDeadDeathrattleMinions();
 
 
 			LblWins.Visibility = Config.Instance.ShowDeckWins && _game.IsUsingPremade ? Visible : Collapsed;

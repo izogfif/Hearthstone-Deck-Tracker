@@ -38,6 +38,52 @@ namespace Hearthstone_Deck_Tracker.Hearthstone.Entities
 		public int Id { get; set; }
 		public string CardId { get; set; }
 
+        public string LogInfo()
+        {
+            string result = "[";
+            switch ((CardType)GetTag(GameTag.CARDTYPE))
+            {
+                case CardType.ENCHANTMENT:
+                    result += "enchantment";
+                    break;
+                case CardType.GAME:
+                    result += "game";
+                    break;
+                case CardType.HERO:
+                    result += "hero";
+                    break;
+                case CardType.HERO_POWER:
+                    result += "hero power";
+                    break;
+                case CardType.INVALID:
+                    result += "invalid";
+                    break;
+                case CardType.ITEM:
+                    result += "item";
+                    break;
+                case CardType.MINION:
+                    result += "minion";
+                    break;
+                case CardType.PLAYER:
+                    result += "player";
+                    break;
+                case CardType.SPELL:
+                    result += "spell";
+                    break;
+                case CardType.TOKEN:
+                    result += "token";
+                    break;
+                case CardType.WEAPON:
+                    result += "weapon";
+                    break;
+                default:
+                    result += "unknown";
+                    break;
+            }
+            result += "] with ID " + Id + " (" + LocalizedName + ")";
+            return result;
+        }
+
 		/// <Summary>
 		/// This is player entity, NOT the player hero.
 		/// </Summary>
@@ -45,8 +91,10 @@ namespace Hearthstone_Deck_Tracker.Hearthstone.Entities
 
 		internal void SetPlayer(bool isPlayer) => IsPlayer = isPlayer;
 
-		[JsonIgnore]
 		public bool IsHero => GetTag(GameTag.CARDTYPE) == (int)CardType.HERO;
+
+        [JsonIgnore]
+        public bool IsEnchantment => GetTag(GameTag.CARDTYPE) == (int)CardType.ENCHANTMENT;
 
 		[JsonIgnore]
 		public bool IsActiveDeathrattle => HasTag(GameTag.DEATHRATTLE) && GetTag(GameTag.DEATHRATTLE) == 1;
@@ -108,6 +156,9 @@ namespace Hearthstone_Deck_Tracker.Hearthstone.Entities
 		[JsonIgnore]
 		public int Health => GetTag(GameTag.HEALTH) - GetTag(GameTag.DAMAGE);
 
+        [JsonIgnore]
+        public int MaxHealth => GetTag(GameTag.HEALTH);
+
 		[JsonIgnore]
 		public SolidColorBrush HealthTextColor
 		{
@@ -160,8 +211,13 @@ namespace Hearthstone_Deck_Tracker.Hearthstone.Entities
 			}
 		}
 
-		[JsonIgnore]
-		public string LocalizedName => Card.LocalizedName;
+		public string LocalizedName
+        {
+            get
+            {
+                return Card.LocalizedName;
+            }
+        }
 
 		[JsonIgnore]
 		public string Effects

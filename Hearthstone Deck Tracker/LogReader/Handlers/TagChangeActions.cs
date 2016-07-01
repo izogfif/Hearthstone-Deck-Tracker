@@ -11,6 +11,7 @@ using static HearthDb.Enums.GameTag;
 using static HearthDb.Enums.PlayState;
 using static HearthDb.Enums.Zone;
 using static Hearthstone_Deck_Tracker.Replay.KeyPointType;
+using System.IO;
 
 namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 {
@@ -220,12 +221,18 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 			}
 			else if(zone == (int)PLAY)
 			{
-				if(controller == game.Player.Id)
-					ReplayMaker.Generate(BoardPos, id, ActivePlayer.Player, game);
-				else if(controller == game.Opponent.Id)
-					ReplayMaker.Generate(BoardPos, id, ActivePlayer.Opponent, game);
-			}
-		}
+                if (controller == game.Player.Id)
+                {
+                    ReplayMaker.Generate(BoardPos, id, ActivePlayer.Player, game);
+                }
+                else if (controller == game.Opponent.Id)
+                {
+                    ReplayMaker.Generate(BoardPos, id, ActivePlayer.Opponent, game);
+                }
+                if (entity.IsMinion)
+                    game.WriteInLog("Entity " + entity.LogInfo() + " has moved to position " + entity.GetTag(ZONE_POSITION));
+            }
+        }
 
 		private void NumAttacksThisTurnChange(IHsGameState gameState, int id, IGame game, int value)
 		{
@@ -280,7 +287,15 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 					entity.Info.OriginalZone = (Zone)value;
 			}
 			var controller = entity.GetTag(CONTROLLER);
-			switch((Zone)prevValue)
+            if ((Zone)prevValue == Zone.PLAY)
+            {
+                game.RemoveEntityFromBoard(game.Entities[id]);
+            }
+            else if ((Zone)value == Zone.PLAY)
+            {
+                game.PutEntityOnBoard(game.Entities[id]);
+            }
+            switch ((Zone)prevValue)
 			{
 				case DECK:
 					ZoneChangeFromDeck(gameState, id, game, value, prevValue, controller, entity.CardId);
@@ -494,18 +509,23 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 			switch((Zone)value)
 			{
 				case PLAY:
-					if(controller == game.Player.Id)
-					{
-						gameState.GameHandler.HandlePlayerPlay(game.Entities[id], cardId, gameState.GetTurnNumber());
-						gameState.ProposeKeyPoint(Play, id, ActivePlayer.Player);
-					}
-					else if(controller == game.Opponent.Id)
-					{
-						gameState.GameHandler.HandleOpponentPlay(game.Entities[id], cardId, game.Entities[id].GetTag(ZONE_POSITION),
-																 gameState.GetTurnNumber());
-						gameState.ProposeKeyPoint(Play, id, ActivePlayer.Opponent);
-					}
-					break;
+                {
+                    String sPlayerName = "";
+                    if (controller == game.Player.Id)
+                    {
+                        gameState.GameHandler.HandlePlayerPlay(game.Entities[id], cardId, gameState.GetTurnNumber());
+                        gameState.ProposeKeyPoint(Play, id, ActivePlayer.Player);
+                        sPlayerName = game.Player.Name;
+                    }
+                    else if (controller == game.Opponent.Id)
+                    {
+                        gameState.GameHandler.HandleOpponentPlay(game.Entities[id], cardId, game.Entities[id].GetTag(ZONE_POSITION),
+                                                                    gameState.GetTurnNumber());
+                        gameState.ProposeKeyPoint(Play, id, ActivePlayer.Opponent);
+                        sPlayerName = game.Opponent.Name;
+                    }
+                    break;
+                }
 				case REMOVEDFROMGAME:
 				case SETASIDE:
 				case GRAVEYARD:

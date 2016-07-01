@@ -147,6 +147,7 @@ namespace Hearthstone_Deck_Tracker
 		private void OnAttackEvent()
 		{
 			var attackInfo = new AttackInfo((Card)_attackingEntity.Card.Clone(), (Card)_defendingEntity.Card.Clone());
+            _game.WriteInLog("Entity " + _attackingEntity.LogInfo() + " attacks entity " + _defendingEntity.LogInfo());
 			if(_attackingEntity.IsControlledBy(_game.Player.Id))
 				GameEvents.OnPlayerMinionAttack.Execute(attackInfo);
 			else
@@ -166,6 +167,17 @@ namespace Hearthstone_Deck_Tracker
 				Core.Overlay.ShowSecrets();
 		}
 
+		public void HandleMinionDeath(Entity entity)
+		{
+			_game.Player.RegisterDeathOfDeathrattleMinion(entity);
+		}
+
+
+		public void HandleOpponentMinionDeathrattle(Entity entity)
+		{
+			_game.Opponent.RegisterDeathOfDeathrattleMinion(entity);
+		}
+
 		public void HandleOpponentMinionDeath(Entity entity, int turn)
 		{
 			if(!Config.Instance.AutoGrayoutSecrets)
@@ -178,7 +190,7 @@ namespace Hearthstone_Deck_Tracker
 
 			if(entity.IsActiveDeathrattle)
 			{
-				if(!CardIds.DeathrattleSummonCardIds.TryGetValue(entity.CardId ?? "", out numDeathrattleMinions))
+				if (!CardIds.DeathrattleSummonCardIds.TryGetValue(entity.CardId ?? "", out numDeathrattleMinions))
 				{
 					if(entity.CardId == HearthDb.CardIds.Collectible.Neutral.Stalagg
 					   && _game.Opponent.Graveyard.Any(x => x.CardId == HearthDb.CardIds.Collectible.Neutral.Feugen)
@@ -282,7 +294,7 @@ namespace Hearthstone_Deck_Tracker
 				HandleTurnStart(_turnQueue.Dequeue());
 		}
 
-		private void HandleTurnStart(Tuple<ActivePlayer, int> turn)
+        private void HandleTurnStart(Tuple<ActivePlayer, int> turn)
 		{
 			var player = turn.Item1;
 			Log.Info($"--- {player} turn {turn.Item2} ---");
@@ -299,6 +311,8 @@ namespace Hearthstone_Deck_Tracker
 
 				if(Config.Instance.BringHsToForeground)
 					User32.BringHsToForeground();
+
+                _game.DumpBoard();
 			}
 		}
 
@@ -340,6 +354,10 @@ namespace Hearthstone_Deck_Tracker
 		{
 			if(DateTime.Now - _lastGameStart < new TimeSpan(0, 0, 0, 5)) //game already started
 				return;
+
+			_game.Player.ClearListOfDeadDeathrattleMinions();
+			_game.Opponent.ClearListOfDeadDeathrattleMinions();
+
 			_handledGameEnd = false;
 			_lastGameStart = DateTime.Now;
 			Log.Info("--- Game start ---");
@@ -798,9 +816,10 @@ namespace Hearthstone_Deck_Tracker
 			Core.UpdatePlayerCards();
 			GameEvents.OnPlayerPlay.Execute(Database.GetCardFromId(cardId));
 			HandleSecretsOnPlay(entity);
-		}
+            _game.WriteInLog("Player plays " + entity.LogInfo());
+        }
 
-		public async void HandleSecretsOnPlay(Entity entity)
+        public async void HandleSecretsOnPlay(Entity entity)
 		{
 			if(!Config.Instance.AutoGrayoutSecrets)
 				return;
@@ -863,6 +882,8 @@ namespace Hearthstone_Deck_Tracker
 		public void HandlePlayerPlayToGraveyard(Entity entity, string cardId, int turn)
 		{
 			_game.Player.PlayToGraveyard(entity, cardId, turn);
+            if (entity.IsMinion)
+                HandleMinionDeath(entity);
 			GameEvents.OnPlayerPlayToGraveyard.Execute((Card)entity.Card.Clone());
 		}
 
@@ -872,7 +893,8 @@ namespace Hearthstone_Deck_Tracker
 			GameEvents.OnOpponentPlayToGraveyard.Execute((Card)entity.Card.Clone());
 			if(playersTurn && entity.IsMinion)
 				HandleOpponentMinionDeath(entity, turn);
-		}
+            HandleOpponentMinionDeathrattle(entity);
+        }
 
 		public void HandlePlayerCreateInPlay(Entity entity, string cardId, int turn)
 		{
@@ -971,6 +993,7 @@ namespace Hearthstone_Deck_Tracker
 
 		public void HandleOpponentPlay(Entity entity, string cardId, int from, int turn)
 		{
+            _game.WriteInLog("Opponent plays " + entity.LogInfo());
 			_game.Opponent.Play(entity, turn);
 			Core.UpdateOpponentCards();
 			GameEvents.OnOpponentPlay.Execute(Database.GetCardFromId(cardId));

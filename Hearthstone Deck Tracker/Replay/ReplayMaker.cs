@@ -24,43 +24,34 @@ namespace Hearthstone_Deck_Tracker.Replay
 
 		public static void Generate(KeyPointType type, int id, ActivePlayer player, IGame game) => Points.Add(new ReplayKeyPoint(game.Entities.Values.ToArray(), type, id, player));
 
+        public static bool SaveAsJson(string filename)
+        {
+            Entity player, playerHero, opponent, opponentHero;
+            if (!PrepareForWriting(out player, out playerHero, out opponent, out opponentHero))
+                return false;
+            using (var json = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(json))
+                {
+                    sw.Write(JsonConvert.SerializeObject(Points));
+                    sw.Flush();
+                    using (var fileStream = new FileStream(filename, FileMode.Create))
+                    {
+                        json.Seek(0, SeekOrigin.Begin);
+                        json.CopyTo(fileStream);
+                        fileStream.Flush();
+                    }
+                }
+            }
+            return true;
+        }
 		public static string SaveToDisk(List<string> powerLog)
 		{
 			try
 			{
-				if(!Points.Any())
-					return null;
-				ResolveZonePos();
-				ResolveCardIds();
-				RemoveObsoletePlays();
-
-				var player = Points.Last().Data.First(x => x.IsPlayer);
-				var opponent = Points.Last().Data.First(x => x.HasTag(GameTag.PLAYER_ID) && !x.IsPlayer);
-				var playerHero =
-					Points.Last()
-					      .Data.First(
-					                  x =>
-					                  x.GetTag(GameTag.CARDTYPE) == (int)CardType.HERO && x.IsControlledBy(player.GetTag(GameTag.CONTROLLER)));
-				var opponentHero =
-					Points.Last()
-					      .Data.FirstOrDefault(
-					                           x =>
-					                           x.GetTag(GameTag.CARDTYPE) == (int)CardType.HERO
-					                           && x.IsControlledBy(opponent.GetTag(GameTag.CONTROLLER)));
-				if(opponentHero == null)
-				{
-					//adventure bosses
-					opponentHero =
-						Points.Last()
-						      .Data.First(
-						                  x =>
-						                  !string.IsNullOrEmpty(x.CardId)
-						                  && ((x.CardId.StartsWith("NAX") && x.CardId.Contains("_01")) || x.CardId.StartsWith("BRMA"))
-						                  && Database.GetHeroNameFromId(x.CardId) != null);
-
-					ResolveOpponentName(Database.GetHeroNameFromId(opponentHero.CardId));
-				}
-
+                Entity player, playerHero, opponent, opponentHero;
+                if (!PrepareForWriting(out player, out playerHero, out opponent, out opponentHero))
+                    return null;
 				var fileName =
 					$"{player.Name}({Database.GetHeroNameFromId(playerHero.CardId)}) vs {opponent.Name}({Database.GetHeroNameFromId(opponentHero.CardId)}) {DateTime.Now.ToString("HHmm-ddMMyy")}";
 
@@ -97,8 +88,49 @@ namespace Hearthstone_Deck_Tracker.Replay
 				return null;
 			}
 		}
+        private static bool PrepareForWriting(out Entity player, out Entity playerHero, out Entity opponent, out Entity opponentHero)
+        {
+            player = null;
+            playerHero = null;
+            opponent = null;
+            opponentHero = null;
+            if (!Points.Any())
+                return false;
+            ResolveZonePos();
+            ResolveCardIds();
+            RemoveObsoletePlays();
 
-		private static void ResolveOpponentName(string opponentName)
+            player = Points.Last().Data.First(x => x.IsPlayer);
+            opponent = Points.Last().Data.First(x => x.HasTag(GameTag.PLAYER_ID) && !x.IsPlayer);
+            int playerControllerTag = player.GetTag(GameTag.CONTROLLER);
+            playerHero =
+                Points.Last()
+                      .Data.First(
+                                  x =>
+                                  x.GetTag(GameTag.CARDTYPE) == (int)CardType.HERO && x.IsControlledBy(playerControllerTag));
+            int opponentControllerTag = opponent.GetTag(GameTag.CONTROLLER);
+            opponentHero =
+                Points.Last()
+                      .Data.FirstOrDefault(
+                                           x =>
+                                           x.GetTag(GameTag.CARDTYPE) == (int)CardType.HERO
+                                           && x.IsControlledBy(opponentControllerTag));
+            if (opponentHero == null)
+            {
+                //adventure bosses
+                opponentHero =
+                    Points.Last()
+                          .Data.First(
+                                      x =>
+                                      !string.IsNullOrEmpty(x.CardId)
+                                      && ((x.CardId.StartsWith("NAX") && x.CardId.Contains("_01")) || x.CardId.StartsWith("BRMA"))
+                                      && Database.GetHeroNameFromId(x.CardId) != null);
+
+                ResolveOpponentName(Database.GetHeroNameFromId(opponentHero.CardId));
+            }
+            return true;
+        }
+        private static void ResolveOpponentName(string opponentName)
 		{
 			if(opponentName == null)
 				return;

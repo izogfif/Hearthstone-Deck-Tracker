@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Hearthstone.Entities;
 
 namespace Hearthstone_Deck_Tracker.Windows
 {
@@ -16,8 +17,10 @@ namespace Hearthstone_Deck_Tracker.Windows
 		private const string DeckPanelDeckTitle = "Deck Title";
 		private const string DeckPanelWins = "Wins";
 		private const string DeckPanelWinrate = "Win Rate";
+        private const string DeckPanelTotalStrength = "Total strength";
+        private const string DeckPanelDeadDeathrattleMinionCounter = "Dead deathrattle minions counter";
 
-		public void UpdatePlayerLayout()
+        public void UpdatePlayerLayout()
 		{
 			StackPanelPlayer.Children.Clear();
 			foreach(var item in Config.Instance.PanelOrderPlayer)
@@ -42,7 +45,13 @@ namespace Hearthstone_Deck_Tracker.Windows
 					case DeckPanelCards:
 						StackPanelPlayer.Children.Add(ViewBoxPlayer);
 						break;
-				}
+                    case DeckPanelTotalStrength:
+                        StackPanelPlayer.Children.Add(LblPlayerTotalStrength);
+                        break;
+                    case DeckPanelDeadDeathrattleMinionCounter:
+                        StackPanelPlayer.Children.Add(LblPlayerDeadDeathrattleMinions);
+                        break;
+                }
 			}
 		}
 
@@ -68,6 +77,12 @@ namespace Hearthstone_Deck_Tracker.Windows
 					case DeckPanelCards:
 						StackPanelOpponent.Children.Add(ViewBoxOpponent);
 						break;
+                    case DeckPanelTotalStrength:
+                        StackPanelOpponent.Children.Add(LblOpponentTotalStrength);
+                        break;
+                    case DeckPanelDeadDeathrattleMinionCounter:
+                        StackPanelOpponent.Children.Add(LblOpponentDeadDeathrattleMinions);
+                        break;
 				}
 			}
 		}
@@ -122,7 +137,45 @@ namespace Hearthstone_Deck_Tracker.Windows
 			LblOpponentHandChance1.Text = holdingNextTurn + "%";
 		}
 
-		private void SetCardCount(int cardCount, int cardsLeftInDeck)
+
+        private void UpdateOpponentListOfDeadDeathrattleMinions()
+        {
+            String deadDeathrattleMinionsList = "";
+            LblOpponentDeadDeathrattleMinions.Text = "";
+            foreach (KeyValuePair<string, int> minionInfo in _game.Opponent.DeadDeathrattleMinions)
+            {
+                if (deadDeathrattleMinionsList.Length != 0)
+                    deadDeathrattleMinionsList += "\n";
+                deadDeathrattleMinionsList += minionInfo.Key + " (" + minionInfo.Value + ")";
+            }
+
+            LblOpponentDeadDeathrattleMinions.Text = deadDeathrattleMinionsList;
+        }
+
+        private void UpdatePlayerListOfDeadDeathrattleMinions()
+        {
+            String deadDeathrattleMinionsList = "";
+            LblPlayerDeadDeathrattleMinions.Text = "";
+            foreach (KeyValuePair<string, int> minionInfo in _game.Player.DeadDeathrattleMinions)
+            {
+                if (deadDeathrattleMinionsList.Length != 0)
+                    deadDeathrattleMinionsList += "\n";
+                deadDeathrattleMinionsList += minionInfo.Key + " (" + minionInfo.Value + ")";
+            }
+
+            LblPlayerDeadDeathrattleMinions.Text = deadDeathrattleMinionsList;
+        }
+
+        private void UpdatePlayerTotalStrength()
+        {
+            LblPlayerTotalStrength.Text = "Total strength: " + _game.Player.GetTotalStrength(false).ToString() + " / " + _game.Player.GetTotalStrength(true).ToString();
+        }
+        private void UpdateOpponentTotalStrength()
+        {
+            LblOpponentTotalStrength.Text = "Total strength: " + _game.Opponent.GetTotalStrength(false).ToString() + " / " + _game.Opponent.GetTotalStrength(true).ToString();
+        }
+
+        private void SetCardCount(int cardCount, int cardsLeftInDeck)
 		{
 			LblCardCount.Text = cardCount.ToString();
 			LblDeckCount.Text = cardsLeftInDeck.ToString();

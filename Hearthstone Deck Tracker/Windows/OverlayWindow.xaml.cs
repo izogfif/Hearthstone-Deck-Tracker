@@ -90,7 +90,8 @@ namespace Hearthstone_Deck_Tracker.Windows
 		public double PlayerStackHeight => (Config.Instance.PlayerDeckHeight / 100 * Height) / (Config.Instance.OverlayPlayerScaling / 100);
 		public double PlayerListHeight => PlayerStackHeight - PlayerLabelsHeight;
 		public double PlayerLabelsHeight => CanvasPlayerChance.ActualHeight + CanvasPlayerCount.ActualHeight
-			+ LblPlayerFatigue.ActualHeight + LblDeckTitle.ActualHeight + LblWins.ActualHeight + ChancePanelsMargins;
+			                              + LblPlayerFatigue.ActualHeight + LblPlayerTotalStrength.ActualHeight
+                                          + LblPlayerDeadDeathrattleMinions.ActualHeight + LblDeckTitle.ActualHeight + LblWins.ActualHeight + ChancePanelsMargins;
 
 		public VerticalAlignment PlayerStackPanelAlignment
 			=> Config.Instance.OverlayCenterPlayerStackPanel ? VerticalAlignment.Center : VerticalAlignment.Top;
@@ -99,7 +100,8 @@ namespace Hearthstone_Deck_Tracker.Windows
 		public double OpponentListHeight => OpponentStackHeight - OpponentLabelsHeight;
 
 		public double OpponentLabelsHeight => CanvasOpponentChance.ActualHeight + CanvasOpponentCount.ActualHeight
-											+ LblOpponentFatigue.ActualHeight + LblWinRateAgainst.ActualHeight + ChancePanelsMargins;
+											+ LblOpponentFatigue.ActualHeight + LblOpponentTotalStrength.ActualHeight
+                                            + LblOpponentDeadDeathrattleMinions.ActualHeight + LblWinRateAgainst.ActualHeight + ChancePanelsMargins;
 
 		public VerticalAlignment OpponentStackPanelAlignment
 			=> Config.Instance.OverlayCenterOpponentStackPanel ? VerticalAlignment.Center : VerticalAlignment.Top;
