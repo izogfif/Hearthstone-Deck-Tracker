@@ -56,7 +56,8 @@ namespace Hearthstone_Deck_Tracker
 		void HandleOpponentMinionDeath(Entity entity, int turn);
 		void HandleOpponentDamage(Entity entity);
 		void HandleOpponentTurnStart(Entity entity);
-
+        void HandlePlayerTurnStart(Entity entity);
+        void HandleGameStateChange();
 		#endregion
 
 		#region OpponentHandlers

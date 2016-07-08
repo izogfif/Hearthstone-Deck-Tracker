@@ -127,8 +127,11 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 		{
 			if(value <= 0)
 				return;
-			if(game.OpponentEntity?.IsCurrentPlayer ?? false)
-				gameState.GameHandler.HandleOpponentTurnStart(game.Entities[id]);
+            if (game.OpponentEntity?.IsCurrentPlayer ?? false)
+                gameState.GameHandler.HandleOpponentTurnStart(game.Entities[id]);
+            else
+                if (game.PlayerEntity?.IsCurrentPlayer ?? false)
+                    gameState.GameHandler.HandlePlayerTurnStart(game.Entities[id]);
 		}
 
 		private void FatigueChange(IHsGameState gameState, int value, IGame game, int id)

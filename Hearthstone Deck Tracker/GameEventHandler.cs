@@ -258,6 +258,15 @@ namespace Hearthstone_Deck_Tracker
 			if(Core.MainWindow != null)
 				Core.Overlay.ShowSecrets();
 		}
+		public void HandlePlayerTurnStart(Entity entity)
+		{
+			//_game.DumpBoard();
+		}
+		public void HandleGameStateChange()
+		{
+			if (_game.PlayerEntity?.IsCurrentPlayer ?? false)
+				_game.DumpBoard();
+		}
 
 		public void SetOpponentHero(string hero)
 		{
@@ -312,7 +321,7 @@ namespace Hearthstone_Deck_Tracker
 				if(Config.Instance.BringHsToForeground)
 					User32.BringHsToForeground();
 
-                _game.DumpBoard();
+				//_game.DumpBoard();
 			}
 		}
 

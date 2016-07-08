@@ -93,8 +93,13 @@ namespace Hearthstone_Deck_Tracker.Hearthstone.Entities
 
 		public bool IsHero => GetTag(GameTag.CARDTYPE) == (int)CardType.HERO;
 
-        [JsonIgnore]
-        public bool IsEnchantment => GetTag(GameTag.CARDTYPE) == (int)CardType.ENCHANTMENT;
+        public bool IsEnchantment
+        {
+            get
+            {
+                return GetTag(GameTag.CARDTYPE) == (int)CardType.ENCHANTMENT;
+            }
+        }
 
 		[JsonIgnore]
 		public bool IsActiveDeathrattle => HasTag(GameTag.DEATHRATTLE) && GetTag(GameTag.DEATHRATTLE) == 1;
@@ -139,7 +144,17 @@ namespace Hearthstone_Deck_Tracker.Hearthstone.Entities
 			;
 
 		[JsonIgnore]
-		public int Attack => GetTag(GameTag.ATK);
+		public int Attack
+        {
+            get
+            {
+                return GetTag(GameTag.ATK);
+            }
+            set
+            {
+                SetTag(GameTag.ATK, value);
+            }
+        }
 
 		[JsonIgnore]
 		public SolidColorBrush AttackTextColor

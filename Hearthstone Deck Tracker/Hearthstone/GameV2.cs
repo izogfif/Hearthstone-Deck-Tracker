@@ -307,7 +307,18 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 
         public void DumpBoard()
         {
-            ReplayMaker.SaveAsJson("n:\\HSTracker\\log.json");
+            DumpBoard("n:\\HSTracker\\log.json");
+        }
+        public void DumpBoard(string filename)
+        {
+            /*try
+            {
+                ReplayMaker.SaveAsJson(filename);
+            }
+            catch
+            {
+
+            }*/
             ////String sText = "";
             Entity hero = null;
             Entity weapon = null;
@@ -329,7 +340,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
             {
                 Debug.Assert(Entities.ContainsKey(entityId));
                 Entity entity = Entities[entityId];
-                Debug.Assert(entity.IsInPlay && (entity.IsMinion || entity.IsHero || entity.IsHeroPower || entity.IsWeapon || entity.IsEnchantment));
+                Debug.Assert(entity.IsInPlay && (entity.IsMinion || entity.IsHero || entity.IsHeroPower || entity.IsWeapon || entity.IsEnchantment || entity.IsSpell));
                 if (entity.IsMinion)
                 {
                     List<Entity> curEnchantments = enchantments.ContainsKey(entity.Id) ? enchantments[entity.Id] : null;
@@ -337,6 +348,9 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
                 }
                 allEntitiesInPlay.Add(entity);
             }
+
+            Entity playerEntity = null;
+            Entity opponentEntity = null;
             Dictionary<int, Entity> cardsInHand = new Dictionary<int, Entity>();
             foreach (Entity entity in Entities.Values)
             {
@@ -345,18 +359,31 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
                     Debug.Assert(entity.HasTag(GameTag.ZONE_POSITION));
                     cardsInHand[entity.GetTag(GameTag.ZONE_POSITION)] = entity;
                 }
+                if (entity.IsPlayer)
+                {
+                    //Debug.Assert(entity.IsControlledBy(Player.Id));
+                    playerEntity = entity;
+                }
+                else if (entity.IsOpponent)
+                {
+                    //Debug.Assert(entity.IsControlledBy(Opponent.Id));
+                    opponentEntity = entity;
+                }
             }
 
             var cardsInHandAndBoard = new {
                 player = new
                 {
                     playerClass = Player.Class,
-                    name = Player.Name
+                    name = Player.Name,
+                    entity = playerEntity
                 },
                 opponent = new
                 {
                     playerClass = Opponent.Class,
-                    name = Opponent.Name
+                    name = Opponent.Name,
+                    cardsInHand = Opponent.HandCount,
+                    entity = opponentEntity
                 },
                 hand = from pair in cardsInHand
                        orderby pair.Key ascending

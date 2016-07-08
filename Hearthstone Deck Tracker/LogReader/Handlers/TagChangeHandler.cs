@@ -35,6 +35,9 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 					ReplayMaker.Generate(gameState.ProposedKeyPoint.Type, gameState.ProposedKeyPoint.Id, gameState.ProposedKeyPoint.Player, game);
 					gameState.ProposedKeyPoint = null;
 				}
+				//Game started check
+				if (!game.IsInMenu && game.Entities.Count >= 67 && gameState.GetTurnNumber() > 0)
+					gameState.GameHandler.HandleGameStateChange();
 			}
 			gameState.LastId = id;
 			if(id > gameState.MaxId)
