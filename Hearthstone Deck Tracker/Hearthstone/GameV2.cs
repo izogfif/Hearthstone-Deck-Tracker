@@ -425,7 +425,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
         public void RemoveEntityFromBoard(Entity entity)
         {
             Debug.Assert(_idsOfEntitiesOnBoard.Contains(entity.Id) == _entitiesOnBoard.Contains(entity));
-            Debug.Assert(_idsOfEntitiesOnBoard.Contains(entity.Id));
+            //Debug.Assert(_idsOfEntitiesOnBoard.Contains(entity.Id));
             if (!_entitiesOnBoard.Contains(entity))
             {
                 //Something is wrong
