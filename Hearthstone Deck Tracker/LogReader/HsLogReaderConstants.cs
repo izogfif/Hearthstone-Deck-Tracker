@@ -30,7 +30,7 @@ namespace Hearthstone_Deck_Tracker.LogReader
 
 		public static LogReaderInfo RachelleLogReaderInfo => new LogReaderInfo {Name = "Rachelle"};
 		public static LogReaderInfo ArenaLogReaderInfo => new LogReaderInfo {Name = "Arena", Reset = false};
-		public static LogReaderInfo LoadingScreenLogReaderInfo => new LogReaderInfo {Name = "LoadingScreen", StartsWithFilters = new[] {"LoadingScreen.OnSceneLoaded"}};
+		public static LogReaderInfo LoadingScreenLogReaderInfo => new LogReaderInfo {Name = "LoadingScreen", StartsWithFilters = new[] {"LoadingScreen.OnSceneLoaded", "Gameplay" } };
 		public static LogReaderInfo NetLogReaderInfo => new LogReaderInfo {Name = "Net"};
 		public static LogReaderInfo GameStatePowerLogReaderInfo => new LogReaderInfo {Name = "Power", StartsWithFilters = new[] {"GameState."}};
 		public static LogReaderInfo FullScreenFxLogReaderInfo => new LogReaderInfo { Name = "FullScreenFX", Reset = false};
@@ -70,9 +70,6 @@ namespace Hearthstone_Deck_Tracker.LogReader
 			public static readonly Regex CardIdRegex = new Regex(@"cardId=(?<cardId>(\w+))");
 			public static readonly Regex CreationRegex = new Regex(@"FULL_ENTITY - Updating.*id=(?<id>(\d+)).*zone=(?<zone>(\w+)).*CardID=(?<cardId>(\w*))");
 			public static readonly Regex CreationTagRegex = new Regex(@"tag=(?<tag>(\w+))\ value=(?<value>(\w+))");
-
-			public static readonly Regex EntityNameRegex =
-				new Regex(@"TAG_CHANGE\ Entity=(?<name>([\w\s]+\w))\ tag=PLAYER_ID\ value=(?<value>(\d))");
 
 			public static readonly Regex EntityRegex =
 				new Regex(

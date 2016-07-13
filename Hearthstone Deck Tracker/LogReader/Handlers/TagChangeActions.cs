@@ -281,6 +281,8 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 
 		private void ZoneChange(IHsGameState gameState, int id, IGame game, int value, int prevValue)
 		{
+			if(id <= 3)
+				return;
 			var entity = game.Entities[id];
 			if(!entity.Info.OriginalZone.HasValue)
 			{
@@ -314,7 +316,7 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 					break;
 				case Zone.INVALID:
 					var maxId = GetMaxHeroPowerId(game);
-					if(!gameState.SetupDone && (id <= maxId || game.GameEntity?.GetTag(STEP) == (int)Step.INVALID) && entity.GetTag(ZONE_POSITION) < 5)
+					if(!gameState.SetupDone && (id <= maxId || game.GameEntity?.GetTag(STEP) == (int)Step.INVALID && entity.GetTag(ZONE_POSITION) < 5))
 					{
 						entity.Info.OriginalZone = DECK;
 						SimulateZoneChangesFromDeck(gameState, id, game, value, entity.CardId, maxId);

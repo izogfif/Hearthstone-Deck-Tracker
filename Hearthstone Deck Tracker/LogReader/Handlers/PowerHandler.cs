@@ -19,14 +19,11 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 {
 	public class PowerHandler
 	{
-		private DateTime _lastDeterminePlayersWarning1 = DateTime.MinValue;
-		private DateTime _lastDeterminePlayersWarning2 = DateTime.MinValue;
 		private readonly TagChangeHandler _tagChangeHandler = new TagChangeHandler();
 		private readonly List<Entity> _tmpEntities = new List<Entity>();
 
 		public void Handle(string logLine, IHsGameState gameState, IGame game)
 		{
-			var setup = false;
 			var creationTag = false;
 			if(GameEntityRegex.IsMatch(logLine))
 			{
@@ -78,7 +75,6 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 						{
 							Log.Info("Updating UNKNOWN HUMAN PLAYER");
 							entity = unknownHumanPlayer;
-							SetPlayerName(game, entity.Value.GetTag(GameTag.PLAYER_ID), rawEntity);
 						}
 
 						//while the id is unknown, store in tmp entities
@@ -100,38 +96,29 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 							entity.Value.Name = tmpEntity.Name;
 							foreach(var t in tmpEntity.Tags)
 								_tagChangeHandler.TagChange(gameState, t.Key, entity.Key, t.Value, game);
-							SetPlayerName(game, entity.Value.GetTag(GameTag.PLAYER_ID), tmpEntity.Name);
 							_tmpEntities.Remove(tmpEntity);
 							_tagChangeHandler.TagChange(gameState, match.Groups["tag"].Value, entity.Key, match.Groups["value"].Value, game);
 						}
 						if(_tmpEntities.Contains(tmpEntity))
 						{
 							tmpEntity.SetTag(tag, value);
-							if(tmpEntity.HasTag(GameTag.ENTITY_ID))
+							var player = game.Player.Name == tmpEntity.Name ? game.Player 
+										: (game.Opponent.Name == tmpEntity.Name ? game.Opponent : null);
+							if(player != null)
 							{
-								var id = tmpEntity.GetTag(GameTag.ENTITY_ID);
-								if(game.Entities.ContainsKey(id))
+								var playerEntity = game.Entities.FirstOrDefault(x => x.Value.GetTag(GameTag.PLAYER_ID) == player.Id).Value;
+								if(playerEntity != null)
 								{
-									game.Entities[id].Name = tmpEntity.Name;
+									playerEntity.Name = tmpEntity.Name;
 									foreach(var t in tmpEntity.Tags)
-										_tagChangeHandler.TagChange(gameState, t.Key, id, t.Value, game);
+										_tagChangeHandler.TagChange(gameState, t.Key, playerEntity.Id, t.Value, game);
 									_tmpEntities.Remove(tmpEntity);
 								}
-								else
-									Log.Warn("TMP ENTITY (" + rawEntity + ") NOW HAS A KEY, BUT GAME.ENTITIES DOES NOT CONTAIN THIS KEY");
 							}
 						}
 					}
 					else
 						_tagChangeHandler.TagChange(gameState, match.Groups["tag"].Value, entity.Key, match.Groups["value"].Value, game);
-				}
-
-				if(EntityNameRegex.IsMatch(logLine))
-				{
-					match = EntityNameRegex.Match(logLine);
-					var name = match.Groups["name"].Value;
-					var player = int.Parse(match.Groups["value"].Value);
-					SetPlayerName(game, player, name);
 				}
 			}
 			else if(CreationRegex.IsMatch(logLine))
@@ -198,7 +185,6 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 			{
 				var match = CreationTagRegex.Match(logLine);
 				_tagChangeHandler.TagChange(gameState, match.Groups["tag"].Value, gameState.CurrentEntityId, match.Groups["value"].Value, game, true);
-				setup = true;
 				creationTag = true;
 			}
 			if(logLine.Contains("End Spectator"))
@@ -299,9 +285,14 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 			else if(logLine.Contains("BlockType=JOUST"))
 				gameState.JoustReveals = 2;
 			else if(logLine.Contains("CREATE_GAME"))
-			{
-				setup = true;
 				_tagChangeHandler.ClearQueuedActions();
+			else if(gameState.GameTriggerCount == 0 && logLine.Contains("BLOCK_START BlockType=TRIGGER Entity=GameEntity"))
+				gameState.GameTriggerCount++;
+			else if(gameState.GameTriggerCount == 1 && logLine.Contains("BLOCK_END"))
+			{
+				gameState.GameTriggerCount++;
+				_tagChangeHandler.InvokeQueuedActions(game);
+				gameState.SetupDone = true;
 			}
 
 
@@ -311,32 +302,6 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 				_tagChangeHandler.InvokeQueuedActions(game);
 			if(!creationTag)
 				gameState.ResetCurrentEntity();
-			if(!gameState.DeterminedPlayers && gameState.SetupDone)
-			{
-				if((DateTime.Now - _lastDeterminePlayersWarning1).TotalSeconds > 5)
-				{
-					Log.Warn("Could not determine players by checking for opponent hand.");
-					_lastDeterminePlayersWarning1 = DateTime.Now;
-				}
-				var playerCard = game.Entities.FirstOrDefault(x => x.Value.IsInHand && !string.IsNullOrEmpty(x.Value.CardId)).Value;
-				if(playerCard != null)
-					_tagChangeHandler.DeterminePlayers(gameState, game, playerCard.GetTag(GameTag.CONTROLLER), false);
-				else if((DateTime.Now - _lastDeterminePlayersWarning2).TotalSeconds > 5)
-				{
-					Log.Warn("Could not determine players by checking for player hand either... waiting for draws...");
-					_lastDeterminePlayersWarning2 = DateTime.Now;
-				}
-			}
-			if(!setup)
-				gameState.SetupDone = true;
-		}
-
-		private static void SetPlayerName(IGame game, int playerId, string name)
-		{
-			if(playerId == game.Player.Id)
-				game.Player.Name = name;
-			else if(playerId == game.Opponent.Id)
-				game.Opponent.Name = name;
 		}
 
 		private static void AddTargetAsKnownCardId(IHsGameState gameState, IGame game, Match match, int count = 1)

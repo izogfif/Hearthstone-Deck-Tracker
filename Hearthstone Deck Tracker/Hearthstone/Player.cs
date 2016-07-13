@@ -16,7 +16,6 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 	public class Player : INotifyPropertyChanged
 	{
 		public const int DeckSize = 30;
-		private string _name;
 		private readonly GameV2 _game;
 
 		public Player(GameV2 game, bool isLocalPlayer)
@@ -25,16 +24,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 			IsLocalPlayer = isLocalPlayer;
 		}
 
-		public string Name
-		{
-			get { return _name; }
-			set
-			{
-				_name = value;
-				Log(value);
-			}
-		}
-
+		public string Name { get; set; }
 		public string Class { get; set; }
 		public int Id { get; set; }
 		public bool GoingFirst { get; set; }
@@ -177,7 +167,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 			}).ToList();
 
 		public IEnumerable<Card> RevealedCards
-			=> RevealedEntities.Where(x => !x.Info.Created && (x.IsMinion || x.IsSpell || x.IsWeapon)
+			=> RevealedEntities.Where(x => !string.IsNullOrEmpty(x?.CardId) && !x.Info.Created && (x.IsMinion || x.IsSpell || x.IsWeapon)
 									   && ((!x.IsInDeck && (!x.Info.Stolen || x.Info.OriginalController == Id)) || (x.Info.Stolen && x.Info.OriginalController == Id)))
 								.GroupBy(x => new {x.CardId, Stolen = x.Info.Stolen && x.Info.OriginalController != Id})
 								.Select(x =>
@@ -189,7 +179,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 									return card;
 								});
 
-		public IEnumerable<Card> CreatedCardsInHand => Hand.Where(x => (x.Info.Created || x.Info.Stolen)).GroupBy(x => x.CardId).Select(x =>
+		public IEnumerable<Card> CreatedCardsInHand => Hand.Where(x => !string.IsNullOrEmpty(x?.CardId) && (x.Info.Created || x.Info.Stolen)).GroupBy(x => x.CardId).Select(x =>
 		{
 			var card = Database.GetCardFromId(x.Key);
 			card.Count = x.Count();
