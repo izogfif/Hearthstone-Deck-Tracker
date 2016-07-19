@@ -19,7 +19,7 @@ namespace HDTTests.BoardDamage
 			_entities = new Dictionary<int, Entity>();
 			_entities[0] = new Entity(0);
 			_entities[0].SetTag(GameTag.FIRST_PLAYER, 1);
-			_entities[0].IsPlayer = true;
+			//_entities[0].IsPlayer = true;
 			_entities[1] = new Entity(1);
 			_entities[1].Name = "GameEntity";
 			_entities[1].SetTag(GameTag.TURN, 11);
@@ -27,7 +27,7 @@ namespace HDTTests.BoardDamage
 			_heroA = new Entity(4);
 			_heroA.CardId = "HERO_08";
 			_heroA.Name = null;
-			_heroA.IsPlayer = false;
+			//_heroA.IsPlayer = false;
 			_heroA.SetTag(GameTag.HEALTH, 30);
 			_heroA.SetTag(GameTag.ZONE, 1);
 			_heroA.SetTag(GameTag.CONTROLLER, 1);
@@ -39,7 +39,7 @@ namespace HDTTests.BoardDamage
 			_heroB = new Entity(36);
 			_heroB.CardId = "HERO_03";
 			_heroB.Name = null;
-			_heroB.IsPlayer = false;
+			//_heroB.IsPlayer = false;
 			_heroB.SetTag(GameTag.HEALTH, 30);
 			_heroB.SetTag(GameTag.ZONE, 1);
 			_heroB.SetTag(GameTag.CONTROLLER, 2);
@@ -73,7 +73,7 @@ namespace HDTTests.BoardDamage
 		[TestMethod]
 		public void OneOpponentHeroAndOnePlayerHero()
 		{
-			_heroA.IsPlayer = true;
+			//_heroA.IsPlayer = true;
 			var ents = new Dictionary<int, Entity>()
 			{
 				{4, _heroA}, {36, _heroB}

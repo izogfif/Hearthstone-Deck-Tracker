@@ -19,7 +19,7 @@ namespace HDTTests.BoardDamage
 			_entities = new Dictionary<int, Entity>();
 			_entities[0] = new Entity(0);
 			_entities[0].SetTag(GameTag.FIRST_PLAYER, 1);
-			_entities[0].IsPlayer = true;
+			//_entities[0].IsPlayer = true;
 			_entities[1] = new Entity(1);
 			_entities[1].Name = "GameEntity";
 			_entities[1].SetTag(GameTag.TURN, 11);
