@@ -10,6 +10,7 @@ using Hearthstone_Deck_Tracker.Annotations;
 using Hearthstone_Deck_Tracker.Importing.Game;
 using Hearthstone_Deck_Tracker.Utility.Extensions;
 using static System.Windows.Visibility;
+using System.Windows.Controls;
 
 namespace Hearthstone_Deck_Tracker.Controls
 {
@@ -97,6 +98,33 @@ namespace Hearthstone_Deck_Tracker.Controls
 			OnPropertyChanged(nameof(ContentVisibility));
 			OnPropertyChanged(nameof(StartButtonVisibility));
 		}
+
+		private CheckBox GetImportCheckbox(object item)
+		{
+			var c = (ContentPresenter)ItemsControl.ItemContainerGenerator.ContainerFromItem(item);
+			return (CheckBox)c.ContentTemplate.FindName("CheckBoxImport", c);
+		}
+
+		private void CheckBoxImportAll_OnClicked(object sender, RoutedEventArgs e)
+		{
+			foreach(var item in ItemsControl.Items)
+				GetImportCheckbox(item).IsChecked = CheckBoxImportAll.IsChecked.HasValue && CheckBoxImportAll.IsChecked.Value;
+		}
+
+		private void CheckBoxImport_OnChecked(object sender, RoutedEventArgs e)
+		{
+			var modifiedCount = 0;
+			foreach(var item in ItemsControl.Items)
+			{
+				if(GetImportCheckbox(item).IsChecked == true)
+					modifiedCount++;
+			}
+
+			if (modifiedCount == ItemsControl.Items.Count)
+				CheckBoxImportAll.IsChecked = true;
+		}
+
+		private void CheckBoxImport_OnUnchecked(object sender, RoutedEventArgs e) => CheckBoxImportAll.IsChecked = false;
 
 		public void StartedGame()
 		{
