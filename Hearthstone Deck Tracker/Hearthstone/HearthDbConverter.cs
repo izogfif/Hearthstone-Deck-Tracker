@@ -74,7 +74,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 					return GameMode.Arena;
 				case GameType.GT_RANKED:
 					return GameMode.Ranked;
-				case GameType.GT_UNRANKED:
+				case GameType.GT_CASUAL:
 					return GameMode.Casual;
 				case GameType.GT_TAVERNBRAWL:
 				case GameType.GT_TB_2P_COOP:
@@ -101,6 +101,19 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 				return BGT_VS_AI;
 			default:
 				return BGT_UNKNOWN;
+			}
+		}
+
+		public static Format? GetFormat(FormatType format)
+		{
+			switch(format)
+			{
+				case FormatType.FT_WILD:
+					return Format.Wild;
+				case FormatType.FT_STANDARD:
+					return Format.Standard;
+				default:
+					return null;
 			}
 		}
 	}
