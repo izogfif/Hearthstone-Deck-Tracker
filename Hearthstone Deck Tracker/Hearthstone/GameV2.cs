@@ -180,7 +180,8 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
             _idsOfEntitiesOnBoard = new List<int>();
             if (logFile != null)
                 logFile.Dispose();
-            logFile = new StreamWriter(new FileStream("N:\\HSTracker\\log.txt", FileMode.Create));
+            string logFileName = Path.GetTempPath() + "\\log.txt";
+            logFile = new StreamWriter(new FileStream(logFileName, FileMode.Create));
         }
 
 		public void StoreGameState()
@@ -318,7 +319,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 
         public void DumpBoard()
         {
-            DumpBoard("n:\\HSTracker\\log.json");
+            DumpBoard(Path.GetTempPath() + "\\log.json");
         }
         public void DumpBoard(string filename)
         {
@@ -407,7 +408,7 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
                 {
                     sw.Write(JsonConvert.SerializeObject(cardsInHandAndBoard, Formatting.Indented));
                     sw.Flush();
-                    using (var fileStream = new FileStream("N:\\HSTracker\\board_state.json", FileMode.Create))
+                    using (var fileStream = new FileStream(Path.GetTempPath() + "\\board_state.json", FileMode.Create))
                     {
                         json.Seek(0, SeekOrigin.Begin);
                         json.CopyTo(fileStream);

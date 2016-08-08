@@ -1256,8 +1256,9 @@
     ren "..\Hearthstone Deck Tracker\HearthstoneDeckTracker.exe" "Hearthstone Deck Tracker.exe"
     ren "..\Hearthstone Deck Tracker\HearthstoneDeckTracker.exe.config" "Hearthstone Deck Tracker.exe.config"
     xcopy /Y "*.dll" "..\Hearthstone Deck Tracker"
-    xcopy /Y "..\..\..\..\HDTUpdate\bin\Release\HDTUpdate.exe" "..\Hearthstone Deck Tracker"
-    xcopy /Y "..\..\..\..\HDTUninstaller\bin\Release\HDTUninstaller.exe" "..\Hearthstone Deck Tracker" )</PostBuildEvent>
+    xcopy /Y "..\..\..\..\HDTUpdate\bin\$(PlatformName)\Release\HDTUpdate.exe" "..\Hearthstone Deck Tracker"
+    xcopy /Y "..\..\..\..\HDTUninstaller\bin\$(PlatformName)\Release\HDTUninstaller.exe" "..\Hearthstone Deck Tracker" 
+)</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if exist $(SolutionDir)HearthDb (
