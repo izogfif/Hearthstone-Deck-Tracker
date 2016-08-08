@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Xml.Serialization;
 using Hearthstone_Deck_Tracker.Enums;
+using Hearthstone_Deck_Tracker.Utility;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 
 #endregion
@@ -21,6 +22,25 @@ namespace Hearthstone_Deck_Tracker
 
 		public static readonly string AppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 		                                            + @"\HearthstoneDeckTracker";
+
+
+#if(!SQUIRREL)
+		[DefaultValue(".")]
+		public string DataDirPath = ".";
+
+		//updating from <= 0.5.1: 
+		//SaveConfigInAppData and SaveDataInAppData are set to SaveInAppData AFTER the config isloaded
+		//=> Need to be null to avoid creating new config in appdata if config is stored locally.
+		[DefaultValue(true)]
+		public bool? SaveConfigInAppData;
+
+		[DefaultValue(true)]
+		public bool? SaveDataInAppData = null;
+
+		[DefaultValue(true)]
+		public bool SaveInAppData = true;
+#endif
+
 
 		[DefaultValue("Blue")]
 		public string AccentName = "Blue";
@@ -243,9 +263,6 @@ namespace Hearthstone_Deck_Tracker
 
 		[DefaultValue(-1)]
 		public int CustomWidth = -1;
-
-		[DefaultValue(".")]
-		public string DataDirPath = ".";
 
 		[DefaultValue(false)]
 		public bool Debug = false;
@@ -740,18 +757,6 @@ namespace Hearthstone_Deck_Tracker
 		[DefaultValue(false)]
 		public bool ReselectLastDeckUsed = false;
 
-		//updating from <= 0.5.1: 
-		//SaveConfigInAppData and SaveDataInAppData are set to SaveInAppData AFTER the config isloaded
-		//=> Need to be null to avoid creating new config in appdata if config is stored locally.
-		[DefaultValue(true)]
-		public bool? SaveConfigInAppData;
-
-		[DefaultValue(true)]
-		public bool? SaveDataInAppData = null;
-
-		[DefaultValue(true)]
-		public bool SaveInAppData = true;
-
 		[DefaultValue(15)]
 		public double SecretsLeft = 15;
 
@@ -1044,15 +1049,45 @@ namespace Hearthstone_Deck_Tracker
 		#region Properties
 
 		[Obsolete]
-		public string HomeDir => Instance.SaveInAppData ? AppDataPath + "/" : string.Empty;
+		public string HomeDir
+		{
+			get
+			{
+#if(SQUIRREL)
+				return AppDataPath + "\\";
+#else
+				return Instance.SaveInAppData ? AppDataPath + "\\" : string.Empty;
+#endif
+			}
+		}
 
 		public string BackupDir => Path.Combine(DataDir, "Backups");
 
 		public string ConfigPath => Instance.ConfigDir + "config.xml";
 
-		public string ConfigDir => Instance.SaveConfigInAppData == false ? string.Empty : AppDataPath + "\\";
+		public string ConfigDir
+		{
+			get
+			{
+#if(SQUIRREL)
+				return AppDataPath + "\\";
+#else
+				return Instance.SaveConfigInAppData == false ? string.Empty : AppDataPath + "\\";
+#endif
+			}
+		}
 
-		public string DataDir => Instance.SaveDataInAppData == false ? DataDirPath + "\\" : AppDataPath + "\\";
+		public string DataDir
+		{
+			get
+			{
+#if(SQUIRREL)
+				return AppDataPath + "\\";
+#else
+				return Instance.SaveDataInAppData == false ? DataDirPath + "\\" : AppDataPath + "\\";;
+#endif
+			}
+		}
 
 		public string ReplayDir => Path.Combine(DataDir, "Replays");
 
@@ -1101,26 +1136,48 @@ namespace Hearthstone_Deck_Tracker
 			Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
 			try
 			{
+				var config = Path.Combine(AppDataPath, "config.xml");
+#if(SQUIRREL)
+				if(File.Exists(config))
+				{
+					_config = XmlManager<Config>.Load(config);
+					foundConfig = true;
+				}
+#else
 				if(File.Exists("config.xml"))
 				{
 					_config = XmlManager<Config>.Load("config.xml");
 					foundConfig = true;
 				}
-				else if(File.Exists(AppDataPath + @"\config.xml"))
+				else if(File.Exists(config))
 				{
-					_config = XmlManager<Config>.Load(AppDataPath + @"\config.xml");
+					_config = XmlManager<Config>.Load(config);
 					foundConfig = true;
 				}
 				else if(!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
 					//save locally if appdata doesn't exist (when e.g. not on C)
 					Instance.SaveConfigInAppData = false;
+#endif
 			}
-			catch(Exception e)
+			catch(Exception ex)
 			{
-				MessageBox.Show(
-				                e.Message + "\n\n" + e.InnerException + "\n\n If you don't know how to fix this, please delete "
-				                + Instance.ConfigPath, "Error loading config.xml");
-				Application.Current.Shutdown();
+				Log.Error(ex);
+				try
+				{
+					if(File.Exists("config.xml"))
+					{
+						File.Move("config.xml", Helper.GetValidFilePath(".", "config_corrupted", "xml"));
+					}
+					else if(File.Exists(AppDataPath + @"\config.xml"))
+					{
+						File.Move(AppDataPath + @"\config.xml", Helper.GetValidFilePath(AppDataPath, "config_corrupted", "xml"));
+					}
+				}
+				catch(Exception ex1)
+				{
+					Log.Error(ex1);
+				}
+				_config = BackupManager.TryRestore<Config>("config.xml");
 			}
 
 			if(!foundConfig)
@@ -1129,6 +1186,7 @@ namespace Hearthstone_Deck_Tracker
 					Directory.CreateDirectory(Instance.ConfigDir);
 				Save();
 			}
+#if(!SQUIRREL)
 			else if(Instance.SaveConfigInAppData != null)
 			{
 				if(Instance.SaveConfigInAppData.Value) //check if config needs to be moved
@@ -1148,6 +1206,7 @@ namespace Hearthstone_Deck_Tracker
 					Log.Info("Moved config to local");
 				}
 			}
+#endif
 		}
 
 		public void ResetAll()

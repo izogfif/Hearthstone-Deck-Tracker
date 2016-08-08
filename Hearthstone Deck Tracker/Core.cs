@@ -2,7 +2,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using HearthMirror.Enums;
@@ -22,6 +25,8 @@ using Hearthstone_Deck_Tracker.Utility.Logging;
 using Hearthstone_Deck_Tracker.Windows;
 using MahApps.Metro.Controls.Dialogs;
 using Hearthstone_Deck_Tracker.Utility.Themes;
+using Hearthstone_Deck_Tracker.Utility.Updating;
+using Squirrel;
 
 #endregion
 
@@ -51,19 +56,32 @@ namespace Hearthstone_Deck_Tracker
 		internal static bool Update { get; set; }
 		internal static bool CanShutdown { get; set; }
 
-		public static void Initialize()
+		public static async void Initialize()
 		{
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 			Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 			var newUser = !Directory.Exists(Config.AppDataPath);
 			Config.Load();
+			var splashScreenWindow = new SplashScreenWindow();
+			splashScreenWindow.ShowConditional();
+#if(SQUIRREL)
+			if(Config.Instance.CheckForUpdates)
+			{
+				var updateCheck = Updater.StartupUpdateCheck(splashScreenWindow);
+				while(!updateCheck.IsCompleted)
+				{
+					await Task.Delay(500);
+					if(splashScreenWindow.SkipWasPressed)
+						break;
+				}
+			}
+#endif
 			Log.Initialize();
 			ConfigManager.Run();
 			LogConfigUpdater.Run().Forget();
 			LogConfigWatcher.Start();
 			Helper.UpdateAppTheme();
 			ThemeManager.Run();
-			var splashScreenWindow = new SplashScreenWindow();
-			splashScreenWindow.ShowConditional();
 			Game = new GameV2();
 			LoginType loginType;
 			var loggedIn = HearthStatsAPI.LoadCredentials();
@@ -96,7 +114,9 @@ namespace Hearthstone_Deck_Tracker
 
 			if(ConfigManager.UpdatedVersion != null)
 			{
+#if(!SQUIRREL)
 				Updater.Cleanup();
+#endif
 				MainWindow.FlyoutUpdateNotes.IsOpen = true;
 				MainWindow.UpdateNotesControl.SetHighlight(ConfigManager.PreviousVersion);
 				MainWindow.UpdateNotesControl.LoadUpdateNotes();
@@ -104,7 +124,9 @@ namespace Hearthstone_Deck_Tracker
 			NetDeck.CheckForChromeExtention();
 			DataIssueResolver.Run();
 
+#if(!SQUIRREL)
 			Helper.CopyReplayFiles();
+#endif
 			BackupManager.Run();
 
 			if(Config.Instance.PlayerWindowOnStart)
@@ -151,8 +173,10 @@ namespace Hearthstone_Deck_Tracker
 
 		private static async void UpdateOverlayAsync()
 		{
+#if(!SQUIRREL)
 			if(Config.Instance.CheckForUpdates)
 				Updater.CheckForUpdates(true);
+#endif
 			var hsForegroundChanged = false;
 			var useNoDeckMenuItem = TrayIcon.NotifyIcon.ContextMenu.MenuItems.IndexOfKey("startHearthstone");
 			while(UpdateOverlay)

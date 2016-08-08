@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using Hearthstone_Deck_Tracker.Enums;
+using Hearthstone_Deck_Tracker.Plugins;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 
 #endregion
@@ -33,8 +34,10 @@ namespace Hearthstone_Deck_Tracker.Utility
 			if(Config.Instance.SelectedTags.Count == 0)
 				Config.Instance.SelectedTags.Add("All");
 
+#if(!SQUIRREL)
 			if(!Directory.Exists(Config.Instance.DataDir))
 				Config.Instance.Reset(nameof(Config.DataDirPath));
+#endif
 		}
 
 		// Logic for dealing with legacy config file semantics
@@ -51,7 +54,7 @@ namespace Hearthstone_Deck_Tracker.Utility
 				Config.Instance.CreatedByVersion = currentVersion.ToString();
 				converted = true;
 			}
-			else
+			else if(currentVersion > configVersion)
 			{
 				if(configVersion <= v0_3_21)
 				{
@@ -117,14 +120,14 @@ namespace Hearthstone_Deck_Tracker.Utility
 				}
 
 
+#if(!SQUIRREL)
 				if(configVersion <= new Version(0, 5, 1, 0))
 				{
-#pragma warning disable 612
 					Config.Instance.SaveConfigInAppData = Config.Instance.SaveInAppData;
 					Config.Instance.SaveDataInAppData = Config.Instance.SaveInAppData;
 					converted = true;
-#pragma warning restore 612
 				}
+#endif
 				if(configVersion <= new Version(0, 6, 6, 0))
 				{
 					if(Config.Instance.ExportClearX == 0.86)
@@ -242,6 +245,69 @@ namespace Hearthstone_Deck_Tracker.Utility
 					Config.Instance.ConstructedAutoImportNew = false;
 					Config.Instance.ConstructedAutoUpdate = false;
 					converted = true;
+				}
+				if(configVersion <= new Version(0, 15, 13, 0))
+				{
+					var targetDir = PluginManager.PluginDirectory;
+					var sourceDir = PluginManager.LocalPluginDirectory;
+					if(sourceDir.Exists)
+					{
+						if(targetDir.Exists)
+						{
+							try
+							{
+								targetDir.Delete(true);
+							}
+							catch(Exception ex)
+							{
+								Log.Error(ex);
+							}
+						}
+						try
+						{
+							targetDir.Create();
+							Helper.CopyFolder(sourceDir.FullName, targetDir.FullName);
+						}
+						catch(Exception ex)
+						{
+							Log.Error(ex);
+						}
+					}
+
+					var bars = new[] { "classic", "dark", "frost", "minimal" };
+					var overlays = new[] { "classic", "default", "frost" };
+					try
+					{
+						foreach(var folder in new DirectoryInfo("Images\\Themes\\Bars").GetDirectories().Where(x => !bars.Contains(x.Name)))
+						{
+							try
+							{
+								Helper.CopyFolder(folder.FullName, Path.Combine(Config.AppDataPath, "Themes\\Bars", folder.Name));
+								folder.Delete(true);
+							}
+							catch(Exception ex)
+							{
+								Log.Error(ex);
+							}
+						}
+
+						foreach(var folder in new DirectoryInfo("Images\\Themes\\Overlay").GetDirectories().Where(x => !overlays.Contains(x.Name)))
+						{
+							try
+							{
+								Helper.CopyFolder(folder.FullName, Path.Combine(Config.AppDataPath, "Themes\\Overlay", folder.Name));
+								folder.Delete(true);
+							}
+							catch(Exception ex)
+							{
+								Log.Error(ex);
+							}
+						}
+					}
+					catch(Exception ex)
+					{
+						Log.Error(ex);
+					}
 				}
 				if(configVersion == new Version(0, 15, 9, 0))
 					DataIssueResolver.RunDeckStatsFix = true;

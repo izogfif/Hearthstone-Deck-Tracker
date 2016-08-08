@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Hearthstone_Deck_Tracker.Utility;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 
 #endregion
@@ -40,8 +41,10 @@ namespace Hearthstone_Deck_Tracker.Stats
 
 		private static DefaultDeckStats Load()
 		{
+#if(!SQUIRREL)
 			SetupDefaultDeckStatsFile();
-			var file = Config.Instance.DataDir + "DefaultDeckStats.xml";
+#endif
+			var file = Path.Combine(Config.Instance.DataDir, "DefaultDeckStats.xml");
 			if(!File.Exists(file))
 				return new DefaultDeckStats();
 			try
@@ -50,42 +53,20 @@ namespace Hearthstone_Deck_Tracker.Stats
 			}
 			catch(Exception ex)
 			{
-				//failed loading deckstats 
-				var corruptedFile = Helper.GetValidFilePath(Config.Instance.DataDir, "DefaultDeckStats_corrupted", "xml");
+				Log.Error(ex);
 				try
 				{
-					File.Move(file, corruptedFile);
+					File.Move(file, Helper.GetValidFilePath(Config.Instance.DataDir, "DefaultDeckStats_corrupted", "xml"));
 				}
-				catch(Exception)
+				catch(Exception ex1)
 				{
-					throw new Exception(
-						"Can not load or move DefaultDeckStats.xml file. Please manually delete the file in \"%appdata\\HearthstoneDeckTracker\".");
+					Log.Error(ex1);
 				}
-
-				//get latest backup file
-				var backup =
-					new DirectoryInfo(Config.Instance.DataDir).GetFiles("DefaultDeckStats_backup*")
-					                                          .OrderByDescending(x => x.CreationTime)
-					                                          .FirstOrDefault();
-				if(backup != null)
-				{
-					try
-					{
-						File.Copy(backup.FullName, file);
-						return XmlManager<DefaultDeckStats>.Load(file);
-					}
-					catch(Exception ex2)
-					{
-						throw new Exception(
-							"Error restoring DefaultDeckStats backup. Please manually rename \"DefaultDeckStats_backup.xml\" to \"DefaultDeckStats.xml\" in \"%appdata\\HearthstoneDeckTracker\".",
-							ex2);
-					}
-				}
-				throw new Exception("DefaultDeckStats.xml is corrupted.", ex);
+				return BackupManager.TryRestore<DefaultDeckStats>("DefaultDeckStats.xml") ?? new DefaultDeckStats();
 			}
 		}
 
-
+#if(!SQUIRREL)
 		internal static void SetupDefaultDeckStatsFile()
 		{
 			if(Config.Instance.SaveDataInAppData == null)
@@ -119,16 +100,8 @@ namespace Hearthstone_Deck_Tracker.Stats
 				File.Move(appDataPath, dataDirPath);
 				Log.Info("Moved DefaultDeckStats to local");
 			}
-
-			var filePath = Config.Instance.DataDir + "DefaultDeckStats.xml";
-			//create if it does not exist
-			if(!File.Exists(filePath))
-			{
-				using(var sr = new StreamWriter(filePath, false))
-					sr.WriteLine("<DefaultDeckStats></DefaultDeckStats>");
-			}
 		}
-
+#endif
 
 		public static void Save() => XmlManager<DefaultDeckStats>.Save(Config.Instance.DataDir + "DefaultDeckStats.xml", Instance);
 
