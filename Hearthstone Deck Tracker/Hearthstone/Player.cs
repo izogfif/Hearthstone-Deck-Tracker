@@ -59,8 +59,8 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
         {
             if (!entity.IsMinion)
                 return;
-            string[] mechanics = entity.Card.Mechanics;
-            if (!mechanics.Contains("Deathrattle"))
+            string[] mechanics = entity.Card?.Mechanics;
+            if (mechanics == null || !mechanics.Contains("Deathrattle"))
                 return;
             if (_deadDeathrattleMinions.ContainsKey(entity.LocalizedName))
                 ++_deadDeathrattleMinions[entity.LocalizedName];
