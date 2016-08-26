@@ -81,7 +81,6 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 			if(!gameState.SetupDone || game.PlayerEntity == null)
 				return;
 			var activePlayer = game.PlayerEntity.HasTag(CURRENT_PLAYER) ? ActivePlayer.Player : ActivePlayer.Opponent;
-			gameState.GameHandler.TurnStart(activePlayer, gameState.GetTurnNumber());
 			if(activePlayer == ActivePlayer.Player)
 				gameState.PlayerUsedHeroPower = false;
 			else
@@ -143,10 +142,7 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 			Entity entity;
 			if(!game.Entities.TryGetValue(id, out entity))
 				return;
-			if(game.OpponentEntity?.IsCurrentPlayer ?? false)
-				gameState.GameHandler.HandleOpponentTurnStart(entity);
-			else if (game.PlayerEntity?.IsCurrentPlayer ?? false)
-				gameState.GameHandler.HandlePlayerTurnStart(game.Entities[id]);
+			gameState.GameHandler.HandleTurnsInPlayChange(entity, gameState.GetTurnNumber());
 		}
 
 		private void FatigueChange(IHsGameState gameState, int value, IGame game, int id)
@@ -466,6 +462,12 @@ namespace Hearthstone_Deck_Tracker.LogReader.Handlers
 						gameState.GameHandler.HandleOpponentSecretPlayed(entity, cardId, -1, gameState.GetTurnNumber(), (Zone)prevValue, id);
 						gameState.ProposeKeyPoint(SecretPlayed, id, ActivePlayer.Opponent);
 					}
+					break;
+				case SETASIDE:
+					if(controller == game.Player.Id)
+						gameState.GameHandler.HandlePlayerCreateInSetAside(entity, gameState.GetTurnNumber());
+					if(controller == game.Opponent.Id)
+						gameState.GameHandler.HandleOpponentCreateInSetAside(entity, gameState.GetTurnNumber());
 					break;
 				default:
 					Log.Warn($"unhandled zone change (id={id}): {prevValue} -> {value}");

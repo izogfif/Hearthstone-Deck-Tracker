@@ -156,13 +156,16 @@ namespace Hearthstone_Deck_Tracker.Windows
         {
             String deadDeathrattleMinionsList = "";
             LblPlayerDeadDeathrattleMinions.Text = "";
+            int totalDeathrattleMinions = 0;
             foreach (KeyValuePair<string, int> minionInfo in _game.Player.DeadDeathrattleMinions)
             {
                 if (deadDeathrattleMinionsList.Length != 0)
                     deadDeathrattleMinionsList += "\n";
                 deadDeathrattleMinionsList += minionInfo.Key + " (" + minionInfo.Value + ")";
+                totalDeathrattleMinions += minionInfo.Value;
             }
-
+            if (deadDeathrattleMinionsList.Length != 0)
+                deadDeathrattleMinionsList += "\nTotal: " + totalDeathrattleMinions;
             LblPlayerDeadDeathrattleMinions.Text = deadDeathrattleMinionsList;
         }
 

@@ -58,9 +58,9 @@ namespace Hearthstone_Deck_Tracker
 
 		public static async void Initialize()
 		{
+			Log.Info($"Operating System: {Helper.GetWindowsVersion()}, .NET Framework: {Helper.GetInstalledDotNetVersion()}");
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 			Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-			var newUser = !Directory.Exists(Config.AppDataPath);
 			Config.Load();
 			var splashScreenWindow = new SplashScreenWindow();
 			splashScreenWindow.ShowConditional();
@@ -71,17 +71,19 @@ namespace Hearthstone_Deck_Tracker
 				while(!updateCheck.IsCompleted)
 				{
 					await Task.Delay(500);
-					if(splashScreenWindow.SkipWasPressed)
+					if(splashScreenWindow.SkipUpdate)
 						break;
 				}
 			}
 #endif
 			Log.Initialize();
 			ConfigManager.Run();
+			var newUser = ConfigManager.PreviousVersion == null;
 			LogConfigUpdater.Run().Forget();
 			LogConfigWatcher.Start();
 			Helper.UpdateAppTheme();
 			ThemeManager.Run();
+			ResourceMonitor.Run();
 			Game = new GameV2();
 			LoginType loginType;
 			var loggedIn = HearthStatsAPI.LoadCredentials();

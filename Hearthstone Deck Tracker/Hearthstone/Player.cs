@@ -435,5 +435,11 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
 			entity.Info.Turn = turn;
 			Log(entity);
 		}
+
+		public void CreateInSetAside(Entity entity, int turn)
+		{
+			entity.Info.Turn = turn;
+			Log(entity);
+		}
 	}
 }

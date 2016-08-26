@@ -48,6 +48,7 @@ namespace Hearthstone_Deck_Tracker
 		void HandleOpponentStolen(Entity entity, string cardId, int turn);
 		void HandlePlayerRemoveFromPlay(Entity entity, int turn);
 		void HandleOpponentRemoveFromPlay(Entity entity, int turn);
+		void HandlePlayerCreateInSetAside(Entity entity, int getTurnNumber);
 
 		#region SecretTriggers
 
@@ -56,8 +57,7 @@ namespace Hearthstone_Deck_Tracker
 		void HandlePlayerMinionPlayed();
 		void HandleOpponentMinionDeath(Entity entity, int turn);
 		void HandleOpponentDamage(Entity entity);
-		void HandleOpponentTurnStart(Entity entity);
-        void HandlePlayerTurnStart(Entity entity);
+		void HandleTurnsInPlayChange(Entity entity, int turn);
         void HandleGameStateChange();
 		#endregion
 
@@ -76,6 +76,7 @@ namespace Hearthstone_Deck_Tracker
 		void SetOpponentHero(string hero);
 		void HandleOpponentHeroPower(string cardId, int turn);
 		void HandleOpponentGetToDeck(Entity entity, int turn);
+		void HandleOpponentCreateInSetAside(Entity entity, int getTurnNumber);
 
 		#endregion OpponentHandlers
 
