@@ -33,54 +33,80 @@ namespace Hearthstone_Deck_Tracker.Windows
 
 		public async void ImportDeck(string url = null)
 		{
-			if(url == null)
-				url = await InputDeckURL();
-			if(url == null)
+			var result = await ImportDeckFromUrl(url);
+			if(result.WasCancelled)
 				return;
-			var deck = await ImportDeckFromURL(url);
-			if(deck != null)
+			if(result.Deck != null)
 			{
-				var reimport = EditingDeck && _newDeck != null && _newDeck.Url == deck.Url;
+				var reimport = EditingDeck && _newDeck != null && _newDeck.Url == result.Deck.Url;
 
 				if(reimport) //keep old notes
-					deck.Note = _newDeck.Note;
+					result.Deck.Note = _newDeck.Note;
 
-				SetNewDeck(deck, reimport);
-				TagControlEdit.SetSelectedTags(deck.Tags);
+				SetNewDeck(result.Deck, reimport);
+				TagControlEdit.SetSelectedTags(result.Deck.Tags);
 				if(Config.Instance.AutoSaveOnImport)
 					SaveDeckWithOverwriteCheck();
 			}
 			else
-				await this.ShowMessageAsync("Error", "Could not load deck from specified url");
+				await this.ShowMessageAsync("No deck found", "Could not find a deck on" + Environment.NewLine + result.Url);
 		}
 
-		private async Task<string> InputDeckURL()
+		public class ImportingResult
 		{
-			var settings = new MessageDialogs.Settings();
-			var validUrls = DeckImporter.Websites.Keys.Select(x => x.Split('.')[0]).ToArray();
+			public Deck Deck { get; set; }
+			public string Url { get; set; }
+			public bool WasCancelled { get; set; }
+		}
+
+		private async Task<ImportingResult> ImportDeckFromUrl(string url = null, bool checkClipboard = true)
+		{
+			var fromClipboard = false;
+			if(url == null)
+			{
+				if(checkClipboard)
+				{
+					try
+					{
+						var clipboard = Clipboard.ContainsText() ? new string(Clipboard.GetText().Take(1000).ToArray()) : "";
+						if(Helper.IsValidUrl(clipboard))
+						{
+							url = clipboard;
+							fromClipboard = true;
+						}
+					}
+					catch(Exception e)
+					{
+						Log.Error(e);
+					}
+				}
+				if(url == null)
+					url = await InputDeckUrl();
+			}
+			if(url == null)
+				return new ImportingResult {WasCancelled = true};
+			var controller = await this.ShowProgressAsync("Loading Deck", "Please wait...");
+			var deck = await DeckImporter.Import(url);
+			if(deck != null && string.IsNullOrEmpty(deck.Url))
+				deck.Url = url;
+			await controller.CloseAsync();
+			if(deck == null && fromClipboard)
+				return await ImportDeckFromUrl(checkClipboard: false);
+			return new ImportingResult {Deck = deck, Url = url};
+		}
+
+		private async Task<string> InputDeckUrl()
+		{
 			try
 			{
-				var clipboard = Clipboard.ContainsText() ? new string(Clipboard.GetText().Take(1000).ToArray()) : "";
-				if(validUrls.Any(clipboard.Contains))
-					settings.DefaultText = clipboard;
+				var validUrls = DeckImporter.Websites.Keys.Select(x => x.Split('.')[0]).ToArray();
+				return await this.ShowInputAsync("Import deck", "Some supported websites:\n" + validUrls.Aggregate((x, next) => x + ", " + next), new MessageDialogs.Settings());
 			}
 			catch(Exception e)
 			{
 				Log.Error(e);
 				return null;
 			}
-
-			return await this.ShowInputAsync("Import deck", "Supported websites:\n" + validUrls.Aggregate((x, next) => x + ", " + next), settings);
-		}
-
-		private async Task<Deck> ImportDeckFromURL(string url)
-		{
-			var controller = await this.ShowProgressAsync("Loading Deck...", "please wait");
-			var deck = await DeckImporter.Import(url);
-			if(deck != null)
-				deck.Url = url;
-			await controller.CloseAsync();
-			return deck;
 		}
 
 		private async void BtnIdString_Click(object sender, RoutedEventArgs e)
@@ -320,115 +346,6 @@ namespace Hearthstone_Deck_Tracker.Windows
 			DeckList.Instance.Decks.Add(arenaDeck);
 			DeckPickerList.UpdateDecks();
 			SelectDeck(arenaDeck, true);
-		}
-
-		public async Task GetCardCounts(Deck deck)
-		{
-			var hsHandle = User32.GetHearthstoneWindow();
-			if(!User32.IsHearthstoneInForeground())
-			{
-				//restore window and bring to foreground
-				User32.ShowWindow(hsHandle, User32.SwRestore);
-				User32.SetForegroundWindow(hsHandle);
-				//wait it to actually be in foreground, else the rect might be wrong
-				await Task.Delay(500);
-			}
-			if(!User32.IsHearthstoneInForeground())
-			{
-				Log.Error("Can't find Hearthstone window.");
-				return;
-			}
-			await Task.Delay(1000);
-			Core.Overlay.ForceHidden = true;
-			Core.Overlay.UpdatePosition();
-			const double xScale = 0.013;
-			const double yScale = 0.017;
-			const int targetHue = 53;
-			const int hueMargin = 3;
-			const int numVisibleCards = 21;
-			var hsRect = User32.GetHearthstoneRect(false);
-			var ratio = (4.0 / 3.0) / ((double)hsRect.Width / hsRect.Height);
-			var posX = (int)Helper.GetScaledXPos(0.92, hsRect.Width, ratio);
-			var startY = 71.0 / 768.0 * hsRect.Height;
-			var strideY = 29.0 / 768.0 * hsRect.Height;
-			var width = (int)Math.Round(hsRect.Width * xScale);
-			var height = (int)Math.Round(hsRect.Height * yScale);
-
-			for(var i = 0; i < Math.Min(numVisibleCards, deck.Cards.Count); i++)
-			{
-				var posY = (int)(startY + strideY * i);
-				var capture = await ScreenCapture.CaptureHearthstoneAsync(new Point(posX, posY), width, height, hsHandle);
-				if(capture == null)
-					continue;
-				var yellowPixels = 0;
-				for(var x = 0; x < width; x++)
-				{
-					for(var y = 0; y < height; y++)
-					{
-						var pixel = capture.GetPixel(x, y);
-						if(Math.Abs(pixel.GetHue() - targetHue) < hueMargin)
-							yellowPixels++;
-					}
-				}
-				//Console.WriteLine(yellowPixels + " of " + width * height + " - " + yellowPixels / (double)(width * height));
-				//capture.Save("arenadeckimages/" + i + ".png");
-				var yellowPixelRatio = yellowPixels / (double)(width * height);
-				if(yellowPixelRatio > 0.25 && yellowPixelRatio < 50)
-					deck.Cards[i].Count = 2;
-			}
-
-			if(deck.Cards.Count > numVisibleCards)
-			{
-				const int scrollClicksPerCard = 4;
-				const int scrollDistance = 120;
-				var clientPoint = new Point(posX, (int)startY);
-				var previousPos = System.Windows.Forms.Cursor.Position;
-				User32.ClientToScreen(hsHandle, ref clientPoint);
-				System.Windows.Forms.Cursor.Position = new Point(clientPoint.X, clientPoint.Y);
-				for(var j = 0; j < scrollClicksPerCard * (deck.Cards.Count - numVisibleCards); j++)
-				{
-					User32.mouse_event((uint)User32.MouseEventFlags.Wheel, 0, 0, -scrollDistance, UIntPtr.Zero);
-					await Task.Delay(30);
-				}
-				System.Windows.Forms.Cursor.Position = previousPos;
-				await Task.Delay(100);
-
-				var remainingCards = deck.Cards.Count - numVisibleCards;
-				startY = 76.0 / 768.0 * hsRect.Height + (numVisibleCards - remainingCards) * strideY;
-				for(var i = 0; i < remainingCards; i++)
-				{
-					var posY = (int)(startY + strideY * i);
-					var capture = await ScreenCapture.CaptureHearthstoneAsync(new Point(posX, posY), width, height, hsHandle);
-					if(capture == null)
-						continue;
-					var yellowPixels = 0;
-					for(var x = 0; x < width; x++)
-					{
-						for(var y = 0; y < height; y++)
-						{
-							var pixel = capture.GetPixel(x, y);
-							if(Math.Abs(pixel.GetHue() - targetHue) < hueMargin)
-								yellowPixels++;
-						}
-					}
-					var yellowPixelRatio = yellowPixels / (double)(width * height);
-					if(yellowPixelRatio > 0.25 && yellowPixelRatio < 50)
-						deck.Cards[numVisibleCards + i].Count = 2;
-				}
-
-				System.Windows.Forms.Cursor.Position = new Point(clientPoint.X, clientPoint.Y);
-				for(var j = 0; j < scrollClicksPerCard * (deck.Cards.Count - 21); j++)
-				{
-					User32.mouse_event((uint)User32.MouseEventFlags.Wheel, 0, 0, scrollDistance, UIntPtr.Zero);
-					await Task.Delay(30);
-				}
-				System.Windows.Forms.Cursor.Position = previousPos;
-			}
-
-			Core.Overlay.ForceHidden = false;
-			Core.Overlay.UpdatePosition();
-
-			ActivateWindow();
 		}
 
 		private void BtnConstructed_Click(object sender, RoutedEventArgs e) => ShowImportDialog(false);

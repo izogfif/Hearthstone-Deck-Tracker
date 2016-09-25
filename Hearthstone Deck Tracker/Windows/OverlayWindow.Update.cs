@@ -194,7 +194,7 @@ namespace Hearthstone_Deck_Tracker.Windows
 		}
 
 
-		public async void UpdatePosition()
+		public void UpdatePosition()
 		{
 			//hide the overlay depenting on options
 			ShowOverlay(
@@ -230,7 +230,7 @@ namespace Hearthstone_Deck_Tracker.Windows
 			try
 			{
 				if(Visibility == Visible)
-					await UpdateCardTooltip();
+					UpdateCardTooltip();
 			}
 			catch (Exception ex)
 			{

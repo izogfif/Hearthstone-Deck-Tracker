@@ -310,6 +310,33 @@ namespace Hearthstone_Deck_Tracker.Utility
 				}
 				if(configVersion == new Version(0, 15, 9, 0))
 					DataIssueResolver.RunDeckStatsFix = true;
+				if(configVersion <= new Version(1, 0, 5, 29))
+				{
+					var convert = new Func<string, DeckPanel?>(panel =>
+					{
+						switch(panel)
+						{
+							case "Win Rate":
+								return DeckPanel.Winrate;
+							case "Cards":
+								return DeckPanel.Cards;
+							case "Card Counter":
+								return DeckPanel.CardCounter;
+							case "Draw Chances":
+								return DeckPanel.DrawChances;
+							case "Fatigue Counter":
+								return DeckPanel.Fatigue;
+							case "Deck Title":
+								return DeckPanel.DeckTitle;
+							case "Wins":
+								return DeckPanel.Wins;
+						}
+						return null;
+					});
+					Config.Instance.DeckPanelOrderPlayer = Config.Instance.PanelOrderPlayer.Select(convert).Where(x => x.HasValue).Select(x => x.Value).ToArray();
+					Config.Instance.DeckPanelOrderOpponent = Config.Instance.PanelOrderOpponent.Select(convert).Where(x => x.HasValue).Select(x => x.Value).ToArray();
+					converted = true;
+				}
 			}
 
 			if(converted)
@@ -318,7 +345,7 @@ namespace Hearthstone_Deck_Tracker.Utility
 				Config.Save();
 			}
 
-			if(configVersion != null && currentVersion > configVersion)
+			if(configVersion != null && new Version(currentVersion.Major, currentVersion.Minor, currentVersion.Build) > new Version(configVersion.Major, configVersion.Minor, configVersion.Build))
 				UpdatedVersion = currentVersion;
 		}
 	}

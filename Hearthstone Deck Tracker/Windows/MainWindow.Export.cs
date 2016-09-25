@@ -9,12 +9,14 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using HearthMirror;
 using Hearthstone_Deck_Tracker.Controls;
 using Hearthstone_Deck_Tracker.Exporting;
 using Hearthstone_Deck_Tracker.Hearthstone;
 using Hearthstone_Deck_Tracker.Utility.Extensions;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 using MahApps.Metro.Controls.Dialogs;
+using static MahApps.Metro.Controls.Dialogs.MessageDialogStyle;
 using Clipboard = System.Windows.Clipboard;
 
 #endregion
@@ -33,38 +35,66 @@ namespace Hearthstone_Deck_Tracker.Windows
 
 		private async void ExportDeck(Deck deck)
 		{
-			var export = true;
 			if(Config.Instance.ShowExportingDialog)
 			{
 				var message = $"1) Create a new (or open an existing) {deck.Class} deck.\n\n2) Leave the deck creation screen open.\n\n3) Click 'Export' and do not move your mouse or type until done.";
-				var settings = new MessageDialogs.Settings {AffirmativeButtonText = "Export"};
-				var result = await this.ShowMessageAsync("Export " + deck.Name + " to Hearthstone", message, MessageDialogStyle.AffirmativeAndNegative, settings);
-				export = result == MessageDialogResult.Affirmative;
+				var result = await this.ShowMessageAsync("Export " + deck.Name + " to Hearthstone", message, AffirmativeAndNegative, new MessageDialogs.Settings { AffirmativeButtonText = "Export" });
+				if(result == MessageDialogResult.Negative)
+					return;
 			}
-			if(export)
+			HearthMirror.Objects.Deck openDeck;
+			var settings = new MessageDialogs.Settings() {AffirmativeButtonText = "Continue", NegativeButtonText = "Cancel"};
+			while((openDeck = Reflection.GetEditedDeck()) == null)
 			{
-				var controller = await this.ShowProgressAsync("Creating Deck", "Please do not move your mouse or type.");
-				Topmost = false;
-				await Task.Delay(500);
-				var success = await DeckExporter.Export(deck);
-				await controller.CloseAsync();
-
-				if(success)
-				{
-					var hsDeck = HearthMirror.Reflection.GetEditedDeck();
-					if(hsDeck != null)
-					{
-						var existingHsId = DeckList.Instance.Decks.Where(x => x.DeckId != deck.DeckId).FirstOrDefault(x => x.HsId == hsDeck.Id);
-						if(existingHsId != null)
-							existingHsId.HsId = 0;
-						deck.HsId = hsDeck.Id;
-						DeckList.Save();
-					}
-				}
-
-				if(deck.MissingCards.Any())
-					this.ShowMissingCardsMessage(deck);
+				var result = await this.ShowMessageAsync("No open deck found", "Please open a deck for editing in Hearthstone before continuing.", AffirmativeAndNegative, settings);
+				if(result == MessageDialogResult.Negative)
+					return;
 			}
+			string selectedClass;
+			while((selectedClass = Database.GetCardFromId(openDeck.Hero).PlayerClass) != deck.Class)
+			{
+				var result = await this.ShowMessageAsync("Incorrect class", $"Open deck is a {selectedClass} deck, but we are trying to import a {deck.Class} deck. Please create a deck with the correct class before continuing.", AffirmativeAndNegative, settings);
+				if(result == MessageDialogResult.Negative)
+					return;
+				openDeck = Reflection.GetEditedDeck();
+			}
+			while(!deck.StandardViable && !openDeck.IsWild)
+			{
+				var result = await this.ShowMessageAsync("Not a wild deck", "Open deck is a standard deck, but we are importing a wild deck. Please switch the deck to wild before continuing.", AffirmativeAndNegative, settings);
+				if(result == MessageDialogResult.Negative)
+					return;
+				openDeck = Reflection.GetEditedDeck();
+			}
+			var controller = await this.ShowProgressAsync("Creating Deck", "Please do not move your mouse or type.");
+			Topmost = false;
+			await Task.Delay(500);
+			var success = await DeckExporter.Export(deck, async () =>
+			{
+				if(controller != null)
+					await controller.CloseAsync();
+				ActivateWindow();
+				var result = await this.ShowMessageAsync("Importing interrupted", "Continue?", AffirmativeAndNegative,
+					new MessageDialogs.Settings() { AffirmativeButtonText = "Continue", NegativeButtonText = "Cancel" });
+				if(result == MessageDialogResult.Affirmative)
+					controller = await this.ShowProgressAsync("Creating Deck", "Please do not move your mouse or type.");
+				return result == MessageDialogResult.Affirmative;
+			});
+			if(controller.IsOpen)
+				await controller.CloseAsync();
+			if(success)
+			{
+				var hsDeck = Reflection.GetEditedDeck();
+				if(hsDeck != null)
+				{
+					var existingHsId = DeckList.Instance.Decks.Where(x => x.DeckId != deck.DeckId).FirstOrDefault(x => x.HsId == hsDeck.Id);
+					if(existingHsId != null)
+						existingHsId.HsId = 0;
+					deck.HsId = hsDeck.Id;
+					DeckList.Save();
+				}
+			}
+			if(deck.MissingCards.Any())
+				this.ShowMissingCardsMessage(deck);
 		}
 
 		private void BtnScreenhot_Click(object sender, RoutedEventArgs e) => CaptureScreenshot(true);
@@ -155,7 +185,7 @@ namespace Hearthstone_Deck_Tracker.Windows
 				{
 					var result = await
 						this.ShowMessageAsync("Exporting multiple decks!", $"You are about to export {selectedDecks.Count} decks. Are you sure?",
-											  MessageDialogStyle.AffirmativeAndNegative);
+											  AffirmativeAndNegative);
 					if(result != MessageDialogResult.Affirmative)
 						return;
 				}
@@ -232,14 +262,13 @@ namespace Hearthstone_Deck_Tracker.Windows
 
 		private async void BtnExportFromWeb_Click(object sender, RoutedEventArgs e)
 		{
-			var url = await InputDeckURL();
-			if(url == null)
+			var result = await ImportDeckFromUrl();
+			if(result.WasCancelled)
 				return;
-			var deck = await ImportDeckFromURL(url);
-			if(deck != null)
-				ExportDeck(deck);
+			if(result.Deck != null)
+				ExportDeck(result.Deck);
 			else
-				await this.ShowMessageAsync("Error", "Could not load deck from specified url");
+				await this.ShowMessageAsync("No deck found", "Could not find a deck on" + Environment.NewLine + result.Url);
 		}
 
 		internal void MenuItemMissingDust_OnClick(object sender, RoutedEventArgs e)

@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,9 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Forms;
 using Hearthstone_Deck_Tracker.Annotations;
+using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Utility;
 using Panel = System.Windows.Controls.Panel;
 using Point = System.Drawing.Point;
 
@@ -21,6 +23,7 @@ namespace Hearthstone_Deck_Tracker
 	/// </summary>
 	public partial class PlayerWindow : INotifyPropertyChanged
 	{
+		private const string LocFatigue = "Overlay_DeckList_Label_Fatigue";
 		private readonly GameV2 _game;
 		private bool _appIsClosing;
 
@@ -97,27 +100,27 @@ namespace Hearthstone_Deck_Tracker
 		public void UpdatePlayerLayout()
 		{
 			StackPanelMain.Children.Clear();
-			foreach(var item in Config.Instance.PanelOrderPlayer)
+			foreach(var item in Config.Instance.DeckPanelOrderPlayer)
 			{
 				switch(item)
 				{
-					case "Draw Chances":
-						StackPanelMain.Children.Add(CanvasPlayerChance);
+					case DeckPanel.Cards:
+						StackPanelMain.Children.Add(ViewBoxPlayer);
 						break;
-					case "Card Counter":
+					case DeckPanel.CardCounter:
 						StackPanelMain.Children.Add(CanvasPlayerCount);
 						break;
-					case "Fatigue Counter":
+					case DeckPanel.DrawChances:
+						StackPanelMain.Children.Add(CanvasPlayerChance);
+						break;
+					case DeckPanel.Fatigue:
 						StackPanelMain.Children.Add(LblPlayerFatigue);
 						break;
-					case "Deck Title":
+					case DeckPanel.DeckTitle:
 						StackPanelMain.Children.Add(LblDeckTitle);
 						break;
-					case "Wins":
+					case DeckPanel.Wins:
 						StackPanelMain.Children.Add(LblWins);
-						break;
-					case "Cards":
-						StackPanelMain.Children.Add(ViewBoxPlayer);
 						break;
 				}
 			}
@@ -131,7 +134,7 @@ namespace Hearthstone_Deck_Tracker
 
 			if(cardsLeftInDeck <= 0)
 			{
-				LblPlayerFatigue.Text = "Next draw fatigues for: " + (_game.Player.Fatigue + 1);
+				LblPlayerFatigue.Text = LocUtil.Get(LocFatigue) + " " + (_game.Player.Fatigue + 1);
 
 				LblDrawChance2.Text = "0%";
 				LblDrawChance1.Text = "0%";

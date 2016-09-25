@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Hearthstone_Deck_Tracker.Annotations;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Utility;
 using Point = System.Drawing.Point;
 using Panel = System.Windows.Controls.Panel;
 
@@ -23,6 +24,7 @@ namespace Hearthstone_Deck_Tracker
 	/// </summary>
 	public partial class OpponentWindow : INotifyPropertyChanged
 	{
+		private const string LocFatigue = "Overlay_DeckList_Label_Fatigue";
 		private readonly GameV2 _game;
 		private bool _appIsClosing;
 
@@ -80,29 +82,29 @@ namespace Hearthstone_Deck_Tracker
 		public void UpdateOpponentLayout()
 		{
 			StackPanelMain.Children.Clear();
-			foreach(var item in Config.Instance.PanelOrderOpponent)
+			foreach(var item in Config.Instance.DeckPanelOrderOpponent)
 			{
 				switch(item)
 				{
-					case "Cards":
+					case DeckPanel.Cards:
 						StackPanelMain.Children.Add(ViewBoxOpponent);
 						break;
-					case "Draw Chances":
+					case DeckPanel.DrawChances:
 						StackPanelMain.Children.Add(CanvasOpponentChance);
 						break;
-					case "Card Counter":
+					case DeckPanel.CardCounter:
 						StackPanelMain.Children.Add(CanvasOpponentCount);
 						break;
-					case "Fatigue Counter":
+					case DeckPanel.Fatigue:
 						StackPanelMain.Children.Add(LblOpponentFatigue);
 						break;
-					case "Win Rate":
+					case DeckPanel.Winrate:
 						StackPanelMain.Children.Add(LblWinRateAgainst);
 						break;
-                    case "Total Strength":
+                    case DeckPanel.TotalStrength:
                         StackPanelMain.Children.Add(LblOpponentTotalStrength);
                         break;
-                    case "Dead deathrattle minions counter":
+                    case DeckPanel.DeadDeathrattleMinionsCounter:
                         StackPanelMain.Children.Add(LblOpponentDeadDeathrattleMinions);
                         break;
 				}
@@ -118,7 +120,7 @@ namespace Hearthstone_Deck_Tracker
 
 			if(cardsLeftInDeck <= 0)
 			{
-				LblOpponentFatigue.Text = "Next draw fatigues for: " + (_game.Opponent.Fatigue + 1);
+				LblOpponentFatigue.Text = LocUtil.Get(LocFatigue) + " " + (_game.Opponent.Fatigue + 1);
 
 				LblOpponentDrawChance2.Text = "0%";
 				LblOpponentDrawChance1.Text = "0%";

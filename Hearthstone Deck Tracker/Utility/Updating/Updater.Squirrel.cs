@@ -1,6 +1,7 @@
-﻿#if(SQUIRREL)
+#if(SQUIRREL)
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -15,10 +16,12 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 {
 	internal static partial class Updater
 	{
-		private static string _releaseUrl;
 
+		private static bool _useChinaMirror = CultureInfo.CurrentCulture.Name == "zh-CN";
+		private static string _releaseUrl;
+		private static TimeSpan _updateCheckDelay = new TimeSpan(0, 20, 0);
 		private static bool ShouldCheckForUpdates()
-			=> Config.Instance.CheckForUpdates && DateTime.Now - _lastUpdateCheck >= new TimeSpan(0, 10, 0);
+			=> Config.Instance.CheckForUpdates && DateTime.Now - _lastUpdateCheck >= _updateCheckDelay;
 
 		public static async void CheckForUpdates(bool force = false)
 		{
@@ -27,11 +30,13 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 			_lastUpdateCheck = DateTime.Now;
 			try
 			{
-				using(var mgr = await UpdateManager.GitHubUpdateManager(await GetReleaseUrl("live"), prerelease: Config.Instance.CheckForBetaUpdates))
+				using(var mgr = await GetUpdateManager())
 				{
-					var release = await mgr.UpdateApp();
-					if(release != null)
+					if(await SquirrelUpdate(mgr, null))
+					{
+						_updateCheckDelay = new TimeSpan(1, 0, 0);
 						StatusBar.Visibility = Visibility.Visible;
+					}
 				}
 			}
 			catch(Exception ex)
@@ -63,13 +68,19 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 			return _releaseUrl;
 		}
 
+		private static async Task<UpdateManager> GetUpdateManager()
+		{
+			if(_useChinaMirror)
+				return new UpdateManager(await GetReleaseUrl("live-china"));
+			return await UpdateManager.GitHubUpdateManager(await GetReleaseUrl("live"), prerelease: Config.Instance.CheckForBetaUpdates);
+		}
 		public static async Task StartupUpdateCheck(SplashScreenWindow splashScreenWindow)
 		{
 			try
 			{
 				Log.Info("Checking for updates");
 				bool updated;
-				using(var mgr = await UpdateManager.GitHubUpdateManager(await GetReleaseUrl("live"), prerelease: Config.Instance.CheckForBetaUpdates))
+				using(var mgr = await GetUpdateManager())
 				{
 					SquirrelAwareApp.HandleEvents(
 						v => mgr.CreateShortcutForThisExe(),
@@ -77,7 +88,7 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 						onAppUninstall: v => mgr.RemoveShortcutForThisExe(),
 						onFirstRun: CleanUpInstallerFile
 						);
-					updated = await SquirrelUpdate(splashScreenWindow, mgr);
+					updated = await SquirrelUpdate(mgr, splashScreenWindow);
 				}
 				if(updated)
 				{
@@ -113,12 +124,12 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 			}
 		}
 
-		private static async Task<bool> SquirrelUpdate(SplashScreenWindow splashScreenWindow, UpdateManager mgr, bool ignoreDelta = false)
+		private static async Task<bool> SquirrelUpdate(UpdateManager mgr, SplashScreenWindow splashScreenWindow, bool ignoreDelta = false)
 		{
 			try
 			{
 				Log.Info($"Checking for updates (ignoreDelta={ignoreDelta})");
-				splashScreenWindow.StartSkipTimer();
+				splashScreenWindow?.StartSkipTimer();
 				var updateInfo = await mgr.CheckForUpdate(ignoreDelta);
 				if(!updateInfo.ReleasesToApply.Any())
 				{
@@ -135,15 +146,36 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 				if(IsRevisionIncrement(current?.Version, latest?.Version))
 				{
 					Log.Info($"Latest update ({latest}) is revision increment. Updating in background.");
-					splashScreenWindow.SkipUpdate = true;
+					if(splashScreenWindow != null)
+						splashScreenWindow.SkipUpdate = true;
 				}
+				splashScreenWindow?.ShowConditional();
 				Log.Info($"Downloading {updateInfo.ReleasesToApply.Count} {(ignoreDelta ? "" : "delta ")}releases, latest={latest?.Version}");
-				await mgr.DownloadReleases(updateInfo.ReleasesToApply, splashScreenWindow.Updating);
+				if(splashScreenWindow != null)
+					await mgr.DownloadReleases(updateInfo.ReleasesToApply, splashScreenWindow.Updating);
+				else
+					await mgr.DownloadReleases(updateInfo.ReleasesToApply);
+				splashScreenWindow?.Updating(100);
 				Log.Info("Applying releases");
-				await mgr.ApplyReleases(updateInfo, splashScreenWindow.Installing);
+				if(splashScreenWindow != null)
+					await mgr.ApplyReleases(updateInfo, splashScreenWindow.Installing);
+				else
+					await mgr.ApplyReleases(updateInfo);
+				splashScreenWindow?.Installing(100);
 				await mgr.CreateUninstallerRegistryEntry();
 				Log.Info("Done");
 				return true;
+			}
+			catch(WebException ex)
+			{
+				Log.Error(ex);
+				if(!_useChinaMirror)
+				{
+					_useChinaMirror = true;
+					Log.Warn("Now using china mirror");
+					return await SquirrelUpdate(mgr, splashScreenWindow, ignoreDelta);
+				}
+				return false;
 			}
 			catch(Exception ex)
 			{
@@ -151,7 +183,7 @@ namespace Hearthstone_Deck_Tracker.Utility.Updating
 					return false;
 				if(ex is Win32Exception)
 					Log.Info("Not able to apply deltas, downloading full release");
-				return await SquirrelUpdate(splashScreenWindow, mgr, true);
+				return await SquirrelUpdate(mgr, splashScreenWindow, true);
 			}
 		}
 

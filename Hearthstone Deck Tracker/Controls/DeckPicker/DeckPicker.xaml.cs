@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using System;
 using System.Collections.Generic;
@@ -18,6 +18,7 @@ using Hearthstone_Deck_Tracker.Annotations;
 using Hearthstone_Deck_Tracker.Controls.DeckPicker.DeckPickerItemLayouts;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Utility;
 using Hearthstone_Deck_Tracker.Utility.Logging;
 using static System.ComponentModel.ListSortDirection;
 using static System.Windows.Visibility;
@@ -33,6 +34,9 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 	/// </summary>
 	public partial class DeckPicker : INotifyPropertyChanged
 	{
+		private const string LocLink = "DeckPicker_ContextMenu_LinkUrl";
+		private const string LocLinkNew = "DeckPicker_ContextMenu_LinkNewUrl";
+
 		public delegate void DoubleClickHandler(DeckPicker sender, Deck deck);
 
 		public delegate void SelectedDeckHandler(DeckPicker sender, Deck deck);
@@ -42,7 +46,7 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 		private readonly ObservableCollection<DeckPickerClassItem> _classItems;
 		private readonly ObservableCollection<DeckPickerItem> _displayedDecks;
 		private bool _clearingClasses;
-		private ObservableCollection<string> _deckTypeItems;
+		private ObservableCollection<DeckType> _deckTypeItems;
 		private bool _ignoreSelectionChange;
 		private DateTime _lastActiveDeckPanelClick = DateTime.MinValue;
 		private bool _reselectingClasses;
@@ -62,7 +66,7 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 			SelectedClasses = new ObservableCollection<HeroClassAll>();
 			_displayedDecks = new ObservableCollection<DeckPickerItem>();
 			ListViewDecks.ItemsSource = _displayedDecks;
-			DeckTypeItems = new ObservableCollection<string> {"ALL", "ARENA", "STANDARD", "WILD"};
+			DeckTypeItems = new ObservableCollection<DeckType>(Enum.GetValues(typeof(DeckType)).OfType<DeckType>().Take(4));
 		}
 
 		public List<Deck> SelectedDecks
@@ -99,7 +103,7 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 
 		public Visibility VisibilitySearchBar => SearchBarVisibile ? Visible : Collapsed;
 
-		public ObservableCollection<string> DeckTypeItems
+		public ObservableCollection<DeckType> DeckTypeItems
 		{
 			get { return _deckTypeItems; }
 			set
@@ -581,28 +585,12 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 		{
 			if(_ignoreSelectionChange || !Core.Initialized)
 				return;
-			var deckType = DeckType.All;
 			if(e.AddedItems.Count > 0)
 			{
-				var item = e.AddedItems[0] as string;
-				if(item != null)
+				var selected = (DeckType)ListViewDeckType.SelectedItem;
+				if(Config.Instance.SelectedDeckPickerDeckType != selected)
 				{
-					switch(item)
-					{
-						case "ARENA":
-							deckType = DeckType.Arena;
-							break;
-						case "STANDARD":
-							deckType = DeckType.Standard;
-							break;
-						case "WILD":
-							deckType = DeckType.Wild;
-							break;
-					}
-				}
-				if(Config.Instance.SelectedDeckPickerDeckType != deckType)
-				{
-					Config.Instance.SelectedDeckPickerDeckType = deckType;
+					Config.Instance.SelectedDeckPickerDeckType = selected;
 					Config.Save();
 				}
 				UpdateDecks();
@@ -661,7 +649,7 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 			MenuItemMoveDeckToConstructed.Visibility = selectedDecks.First().IsArenaDeck ? Visible : Collapsed;
 			MenuItemMissingCards.Visibility = selectedDecks.First().MissingCards.Any() ? Visible : Collapsed;
 			MenuItemSetDeckUrl.Visibility = selectedDecks.First().IsArenaDeck ? Collapsed : Visible;
-			MenuItemSetDeckUrl.Header = string.IsNullOrEmpty(selectedDecks.First().Url) ? "LINK TO UR_L" : "LINK TO NEW UR_L";
+			MenuItemSetDeckUrl.Header = string.IsNullOrEmpty(selectedDecks.First().Url) ? LocUtil.Get(LocLink, true) : LocUtil.Get(LocLinkNew, true);
 			MenuItemUpdateDeck.Visibility = string.IsNullOrEmpty(selectedDecks.First().Url) ? Collapsed : Visible;
 			MenuItemOpenUrl.Visibility = string.IsNullOrEmpty(selectedDecks.First().Url) ? Collapsed : Visible;
 			MenuItemArchive.Visibility = selectedDecks.Any(d => !d.Archived) ? Visible : Collapsed;

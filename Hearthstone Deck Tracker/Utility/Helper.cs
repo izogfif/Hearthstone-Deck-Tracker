@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 using System;
 using System.Collections;
@@ -34,6 +34,7 @@ using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using WPFLocalizeExtension.Engine;
 using Application = System.Windows.Application;
 using Card = Hearthstone_Deck_Tracker.Hearthstone.Card;
 using Color = System.Drawing.Color;
@@ -53,8 +54,8 @@ namespace Hearthstone_Deck_Tracker
 		public static readonly Dictionary<string, string> LanguageDict = new Dictionary<string, string>
 		{
 			{"English", "enUS"},
-			{"Chinese (China)", "zhCN"},
-			{"Chinese (Taiwan)", "zhTW"},
+			{"简体中文", "zhCN"},
+			{"繁體中文", "zhTW"},
 			{"English (Great Britain)", "enGB"},
 			{"French", "frFR"},
 			{"German", "deDE"},
@@ -133,7 +134,7 @@ namespace Hearthstone_Deck_Tracker
 
 		public static int CurrentSeason => (DateTime.Now.Year - 2014) * 12 - 3 + DateTime.Now.Month;
 
-		public static WindowState GameWindowState { get; internal set; } = WindowState.Normal;
+		public static WindowState GameWindowState { get; internal set; } = User32.GetHearthstoneWindowState();
 
 		public static Version GetCurrentVersion() => Assembly.GetExecutingAssembly().GetName().Version;
 
@@ -208,46 +209,6 @@ namespace Hearthstone_Deck_Tracker
 
 		public static string DeckToIdString(Deck deck)
 			=> deck.GetSelectedDeckVersion().Cards.Aggregate("", (current, card) => current + (card.Id + ":" + card.Count + ";"));
-
-		public static async Task<bool> FriendsListOpen()
-		{
-			//wait for friendslist to open/close
-			await Task.Delay(300);
-
-			var rect = User32.GetHearthstoneRect(false);
-			var capture = await ScreenCapture.CaptureHearthstoneAsync(new Point(0, (int)(rect.Height * 0.85)), (int)(rect.Width * 0.1), (int)(rect.Height * 0.15));
-			if(capture == null)
-				return false;
-
-			for(var y = 0; y < capture.Height; y++)
-			{
-				for(var x = 0; x < capture.Width; x++)
-				{
-					if(!IsYellowPixel(capture.GetPixel(x, y)))
-						continue;
-					var foundFriendsList = true;
-
-					//check for a straight yellow line (left side of add button)
-					for(var i = 0; i < 5; i++)
-					{
-						if(x + i >= capture.Width || !IsYellowPixel(capture.GetPixel(x + i, y)))
-							foundFriendsList = false;
-					}
-					if(foundFriendsList)
-						return true;
-				}
-			}
-			return false;
-		}
-
-		private static bool IsYellowPixel(Color pixel)
-		{
-			const int red = 216;
-			const int green = 174;
-			const int blue = 10;
-			const int deviation = 10;
-			return Math.Abs(pixel.R - red) <= deviation && Math.Abs(pixel.G - green) <= deviation && Math.Abs(pixel.B - blue) <= deviation;
-		}
 
 		public static void UpdateEverything(GameV2 game)
 		{
@@ -629,11 +590,17 @@ namespace Hearthstone_Deck_Tracker
 			}
 		}
 
+		private static int? _hearthstoneBuild;
 		public static int? GetHearthstoneBuild()
 		{
+			if(_hearthstoneBuild.HasValue)
+				return _hearthstoneBuild;
 			var exe = Path.Combine(Config.Instance.HearthstoneDirectory, "Hearthstone.exe");
-			return !File.Exists(exe) ? (int?)null : FileVersionInfo.GetVersionInfo(exe).FilePrivatePart;
+			_hearthstoneBuild = !File.Exists(exe) ? (int?)null : FileVersionInfo.GetVersionInfo(exe).FilePrivatePart;
+			return _hearthstoneBuild;
 		}
+
+		internal static void ClearCachedHearthstoneBuild() => _hearthstoneBuild = null;
 
 		public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
 		{
@@ -739,6 +706,13 @@ namespace Hearthstone_Deck_Tracker
 				Log.Error(ex);
 				return "Unknown";
 			}
+		}
+
+		public static bool IsValidUrl(string url)
+		{
+			Uri result;
+			return Uri.TryCreate(url, UriKind.Absolute, out result)
+				&& (result.Scheme == Uri.UriSchemeHttp || result.Scheme == Uri.UriSchemeHttps);
 		}
 	}
 }
