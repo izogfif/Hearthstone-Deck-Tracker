@@ -73,8 +73,9 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
             _deadDeathrattleMinions.Clear();
         }
 
-        public int GetTotalStrength(bool IgnoreExhausted)
+        public int GetTotalStrength(bool IgnoreExhausted, out int withBuff)
         {
+            int nCharacterCount = 0;
             int nAttack = 0;
             //Entity weapon = null;
             //Entity hero = null;
@@ -84,10 +85,20 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
                 {
                     if (entity.HasTag(GameTag.FROZEN) || !IgnoreExhausted && entity.HasTag(GameTag.EXHAUSTED) && entity.GetTag(GameTag.EXHAUSTED) == 1)
                         continue;
+                    ++nCharacterCount;
                     nAttack += entity.Attack;
                     if (entity.HasTag(GameTag.WINDFURY))
+                    {
                         nAttack += entity.Attack;
+                        ++nCharacterCount;
+                    }
                     continue;
+                }
+                if (entity.IsHero)
+                {
+                    if (entity.HasTag(GameTag.FROZEN) || !IgnoreExhausted && entity.HasTag(GameTag.EXHAUSTED) && entity.GetTag(GameTag.EXHAUSTED) == 1)
+                        continue;
+                    ++nCharacterCount;
                 }
                 //if (entity.IsWeapon)
                 //    weapon = entity;
@@ -107,6 +118,15 @@ namespace Hearthstone_Deck_Tracker.Hearthstone
             //            nAttack += nHeroAttack;
             //    }
             //}
+            withBuff = nAttack;
+            foreach (Entity curCard in this.Hand)
+            {
+                var card = Database.GetCardFromId(curCard.CardId);
+                if (card != null && curCard.IsSpell && card.LocalizedName == "Savage Roar")
+                    withBuff += nCharacterCount * 2;
+            }
+            if (this == _game.Opponent && this.Class == "Druid")
+                withBuff += nCharacterCount * 2;
             return nAttack;
         }
 

@@ -159,13 +159,27 @@ namespace Hearthstone_Deck_Tracker.Windows
             LblPlayerDeadDeathrattleMinions.Text = deadDeathrattleMinionsList;
         }
 
+        private static string GetTotalStrengthText(Player player)
+        {
+            int withBuffNow = 0;
+            int withBuffNextTurn = 0;
+            int totalStrengthNow = player.GetTotalStrength(false, out withBuffNow);
+            int totalStrengthNextTurn = player.GetTotalStrength(true, out withBuffNextTurn);
+            string textToSet = "";
+            if (withBuffNow == totalStrengthNow)
+                textToSet = "Total strength: " + totalStrengthNow + " / " + totalStrengthNextTurn;
+            else
+                textToSet = "Total strength: " + totalStrengthNow + " (" + withBuffNow + ") / " + totalStrengthNextTurn + " (" + withBuffNextTurn + ")";
+            return textToSet;
+        }
+
         private void UpdatePlayerTotalStrength()
         {
-            LblPlayerTotalStrength.Text = "Total strength: " + _game.Player.GetTotalStrength(false).ToString() + " / " + _game.Player.GetTotalStrength(true).ToString();
+            LblPlayerTotalStrength.Text = GetTotalStrengthText(_game.Player);
         }
         private void UpdateOpponentTotalStrength()
         {
-            LblOpponentTotalStrength.Text = "Total strength: " + _game.Opponent.GetTotalStrength(false).ToString() + " / " + _game.Opponent.GetTotalStrength(true).ToString();
+            LblOpponentTotalStrength.Text = GetTotalStrengthText(_game.Opponent);
         }
 
         private void SetCardCount(int cardCount, int cardsLeftInDeck)
