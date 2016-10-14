@@ -253,7 +253,13 @@ namespace Hearthstone_Deck_Tracker.Plugins
 				var settings = XmlManager<List<PluginSettings>>.Load(PluginSettingsFile);
 				foreach(var setting in settings)
 				{
-					var plugin = Plugins.FirstOrDefault(x => x.FileName == setting.FileName && x.Name == setting.Name);
+					var path = setting.FileName;
+					if(Uri.IsWellFormedUriString(path, UriKind.Absolute))
+					{
+						var uri = new Uri(path, UriKind.Absolute);
+						path = string.Join("", uri.Segments.SkipWhile(x => x != "Plugins/"));
+					}
+					var plugin = Plugins.FirstOrDefault(x => x.RelativeFilePath == path && x.Name == setting.Name);
 					if(plugin != null)
 						plugin.IsEnabled = setting.IsEnabled;
 				}
