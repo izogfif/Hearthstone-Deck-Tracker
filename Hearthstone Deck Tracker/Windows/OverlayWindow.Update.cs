@@ -152,8 +152,10 @@ namespace Hearthstone_Deck_Tracker.Windows
 			if (_game.Entities.Count > 67 && (IconBoardAttackPlayer.Visibility == Visible || IconBoardAttackOpponent.Visibility == Visible))
 			{
 				var board = new BoardState();
-				TextBlockPlayerAttack.Text = board.Player.Damage.ToString();
-				TextBlockOpponentAttack.Text = board.Opponent.Damage.ToString();
+                int damageToLethal = (board.Opponent.Hero?.Health ?? 0) - (board.Player?.Damage ?? 0);
+                TextBlockPlayerAttack.Text = damageToLethal.ToString();
+
+                TextBlockOpponentAttack.Text = board.Opponent.Damage.ToString();
 			}
 
 
