@@ -171,8 +171,9 @@
             </Grid>
             <Grid Name="IconBoardAttackPlayer" Canvas.Top="300" Canvas.Left="350" Width="75" Height="75">
                 <Image Source="/HearthstoneDeckTracker;component/Images/board_damage.png"/>
-                <local:HearthstoneTextBlock x:Name="TextBlockPlayerAttack" FontSize="24" Width="75" Height="75" Text="0" TextAlignment="Center" Margin="0,3,0,0"/>
-            </Grid>
+                    <local:HearthstoneTextBlock x:Name="TextBlockPlayerAttack"  Width="75" Text="0" TextAlignment="Center" Margin="0,3,0,0" TextWrapping="WrapWithOverflow"/>
+                    <!--FontSize="24" Height="75"-->
+                </Grid>
             <overlay:WotogCounter x:Name="WotogIconsPlayer" Canvas.Top="200" Canvas.Left="450"/>
             <overlay:WotogCounter x:Name="WotogIconsOpponent" Canvas.Top="300" Canvas.Left="450"/>
         </Canvas>
