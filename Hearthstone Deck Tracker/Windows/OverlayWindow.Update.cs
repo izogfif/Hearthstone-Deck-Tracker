@@ -12,9 +12,6 @@ using Hearthstone_Deck_Tracker.Utility.Logging;
 using static System.Windows.Visibility;
 using static HearthDb.Enums.GameTag;
 using static Hearthstone_Deck_Tracker.Controls.Overlay.WotogCounterStyle;
-using System.Collections.Generic;
-using System.Collections;
-using Hearthstone_Deck_Tracker.Hearthstone.Entities;
 
 namespace Hearthstone_Deck_Tracker.Windows
 {
@@ -145,247 +142,19 @@ namespace Hearthstone_Deck_Tracker.Windows
 				Core.Windows.OpponentWindow.Update();
 		}
 
-        private bool DfsDamage(List<Entity> hand, List<Entity> entitiesPlayed, bool auchenaiOnboard, int doubleDamage, int spellDamage, int manaAvailable, int opponentHealth,
-            Entity maximumSpellDamageMinionOnTheBoard, ref int minimumOpponentHealth, ref List<Entity> entitiesPlayedToMinimumOpponentHealth)
-        {
-            foreach (Entity entity in hand)
-            {
-                int cardCost = entity.GetTag(COST);
-                bool newAuchenaiOnBoard = auchenaiOnboard;
-                int newDoubleDamage = doubleDamage;
-                int newSpellDamage = spellDamage;
-                int newManaAvailable = manaAvailable;
-                int newOpponentHealth = opponentHealth;
-                if (cardCost <= manaAvailable)
-                {
-                    //Try to play this entity
-                    //First, if this is SpellPower minion, try to play it
-                    if (entity.GetTag(SPELLPOWER) > 0)
-                    {
-                        UpdateMaximumSpellDamageMinionOnTheBoard(entity, ref maximumSpellDamageMinionOnTheBoard);
-                        newManaAvailable -= cardCost;
-                        newSpellDamage += entity.GetTag(SPELLPOWER);
-                    }
-                    else //Check cards individually
-                    {
-                        switch (entity.CardId)
-                        {
-                            case "EX1_564": //Faceless Manipulator
-                            {
-                                //Try to duplicate Prophet Velen if possible, otherwise maximum spell damage minion
-                                if (doubleDamage > 0)
-                                {
-                                    newManaAvailable -= cardCost;
-                                    ++newDoubleDamage;
-                                    break;
-                                }
-                                if (maximumSpellDamageMinionOnTheBoard != null)
-                                {
-                                    newManaAvailable -= cardCost;
-                                    newSpellDamage += maximumSpellDamageMinionOnTheBoard.GetTag(SPELLPOWER);
-                                    break;
-                                }
-                                //Don't play it otherwise
-                                continue;
-                            }
-                            case "EX1_350": //Prophet Velen
-                            {
-                                newManaAvailable -= cardCost;
-                                ++newDoubleDamage;
-                                break;
-                            }
-                            case "CS1_130": //Holy smite
-                            {
-                                newManaAvailable -= cardCost;
-                                newOpponentHealth -= (spellDamage + 2) * (1 << doubleDamage);
-                                break;
-                            }
-                            case "DS1_233": //Mind blast
-                            {
-                                newManaAvailable -= cardCost;
-                                newOpponentHealth -= (spellDamage + 5) * (1 << doubleDamage);
-                                break;
-                            }
-                            case "AT_055": //Flash heal
-                            {
-                                //No need to use healing spell if there is no friendly Auchenai Soulpriest on the board
-                                if (!auchenaiOnboard)
-                                    continue;
-                                newManaAvailable -= cardCost;
-                                newOpponentHealth -= (spellDamage + 5) * (1 << doubleDamage);
-                                break;
-                            }
-                            case "GVG_012": //Light of the Naaru
-                            {
-                                if (!auchenaiOnboard)
-                                    continue;
-                                newManaAvailable -= cardCost;
-                                newOpponentHealth -= (spellDamage + 3) * (1 << doubleDamage);
-                                break;
-                            }
-                            case "EX1_591": //Auchenai Soulpriest
-                            {
-                                if (auchenaiOnboard) //There is no need to put second Auchenai Soulrpiest if we already own friendly one
-                                    continue;
-                                newManaAvailable -= cardCost;
-                                newAuchenaiOnBoard = true;
-                                break;
-                            }
-                            default:
-                                continue;
-                        }
-                    }
-                    List<Entity> modifiedEntitiesPlayed = entitiesPlayed.ToList();
-                    modifiedEntitiesPlayed.Add(entity);
-                    if (minimumOpponentHealth > newOpponentHealth)
-                    {
-                        minimumOpponentHealth = newOpponentHealth;
-                        entitiesPlayedToMinimumOpponentHealth = modifiedEntitiesPlayed;
-                    }
-                    if (newOpponentHealth <= 0)
-                        return true;
 
-                    List<Entity> modifiedHand = hand.ToList();
-                    modifiedHand.Remove(entity);
-                    if (DfsDamage(modifiedHand, modifiedEntitiesPlayed, newAuchenaiOnBoard, newDoubleDamage, newSpellDamage, newManaAvailable, newOpponentHealth, maximumSpellDamageMinionOnTheBoard,
-                        ref minimumOpponentHealth, ref entitiesPlayedToMinimumOpponentHealth))
-                        return true;
-                }
-            }
-            return false;
-        }
-        private void UpdateMaximumSpellDamageMinionOnTheBoard(Entity entity, ref Entity maximumSpellDamageMinionOnTheBoard)
-        {
-            if (entity.GetTag(SPELLPOWER) > 0)
-            {
-                if (maximumSpellDamageMinionOnTheBoard == null)
-                    maximumSpellDamageMinionOnTheBoard = entity;
-                else if (entity.GetTag(SPELLPOWER) > maximumSpellDamageMinionOnTheBoard.GetTag(SPELLPOWER))
-                    maximumSpellDamageMinionOnTheBoard = entity;
-            }
-        }
-
-        private void UpdateIcons()
+		private void UpdateIcons()
 		{
 			IconBoardAttackPlayer.Visibility = Config.Instance.HidePlayerAttackIcon || _game.IsInMenu ? Collapsed : Visible;
 			IconBoardAttackOpponent.Visibility = Config.Instance.HideOpponentAttackIcon || _game.IsInMenu ? Collapsed : Visible;
 
-            bool specialCaseForSpellPriestFound = false;
 			// do the calculation if at least one of the icons is visible
 			if (_game.Entities.Count > 67 && (IconBoardAttackPlayer.Visibility == Visible || IconBoardAttackOpponent.Visibility == Visible))
 			{
 				var board = new BoardState();
-                if (_game.Player.Class == "Priest")
-                { 
-                    bool damagingSpellsFound = false;
-                    bool healingSpellsFound = false;
-                    bool auchenaiFound = false;
-                    //First, find spells in the player's hand
-                    foreach (Entity entity in _game.Player.Hand)
-                    {
-                        switch (entity.CardId)
-                        {
-                            case "CS1_130": //Holy smite
-                                damagingSpellsFound = true;
-                                break;
-                            case "AT_055": //Flash heal
-                                healingSpellsFound = true;
-                                break;
-                            case "DS1_233": //Mind blast
-                                damagingSpellsFound = true;
-                                break;
-                            case "GVG_012": //Light of the Naaru
-                                healingSpellsFound = true;
-                                break;
-                            case "EX1_591": //Auchenai Soulpriest
-                                auchenaiFound = true;
-                                break;
-                        }
-                    }
-                    if (damagingSpellsFound || healingSpellsFound && auchenaiFound) //There is something to do
-                    {
-                        List<Entity> entitiesPlayedToMinimumOpponentHealth = new List<Entity>();
-                        int doubleDamage = 0;
-                        int spellDamage = 0;
-                        bool auchenaiOnBoard = false;
-                        bool prophetVelenOnBoard = false;
-                        Entity maximumSpellDamageMinionOnTheBoard = null;
-                        foreach (Entity entity in _game.Player.Board)
-                            UpdateMaximumSpellDamageMinionOnTheBoard(entity, ref maximumSpellDamageMinionOnTheBoard);
-                        foreach (Entity entity in _game.Opponent.Board)
-                            UpdateMaximumSpellDamageMinionOnTheBoard(entity, ref maximumSpellDamageMinionOnTheBoard);
-                        //foreach (Entity entity in _game.Player.Hand)
-                        //{
-                        //    if (entity.GetTag(COST) != 0)
-                        //        continue;
-                        //    if (entity.CardId == "EX1_350") //Prophet Velen
-                        //    {
-                        //        ++doubleDamage;
-                        //        prophetVelenOnBoard = true;
-                        //    }
-                        //    UpdateMaximumSpellDamageMinionOnTheBoard(entity, ref maximumSpellDamageMinionOnTheBoard);
-                        //    spellDamage += entity.GetTag(SPELLPOWER);
-                        //    if (entity.CardId == "EX1_591") //Auchenai Soulpriest
-                        //        auchenaiOnBoard = true;
-                        //}
-                        //if (!prophetVelenOnBoard) //Maybe opponent has it?
-                        //{
-                        //    foreach (Entity entity in _game.Entities.Values)
-                        //    {
-                        //        if (entity.IsInPlay && entity.CardId == "EX1_350")
-                        //        {
-                        //            prophetVelenOnBoard = true;
-                        //            break;
-                        //        }
-                        //    }
-                        //}
-                        ////If there is Prophet Velen on the board and we have 0-cost Faceless Manipulator(s), duplicate Velen
-                        //foreach (Entity entity in _game.Player.Hand)
-                        //{
-                        //    if (entity.GetTag(COST) != 0)
-                        //        continue;
-                        //    if (entity.CardId == "EX1_564") //Faceless Manipulator
-                        //        ++doubleDamage;
-                        //}
-                        //Add spell power bonus from all friendly minions on the board
-                        foreach (Entity entity in _game.Player.Board)
-                            spellDamage += entity.GetTag(SPELLPOWER);
-                        //Now, that we've already put all useful 0-mana cost cards on the board, let's calculate how much damage we can deal
-                        int currentMana = _game.PlayerEntity.GetTag(RESOURCES) + _game.PlayerEntity.GetTag(TEMP_RESOURCES) - _game.PlayerEntity.GetTag(RESOURCES_USED) - _game.PlayerEntity.GetTag(OVERLOAD_LOCKED);
-                        List<Entity> hand = _game.Player.Hand.ToList();
-                        int currentOpponentHealth = board.Opponent.Hero?.Health ?? 0;
-                        int minimumOpponentHealth = currentOpponentHealth;
-                        DfsDamage(hand, new List<Entity>(), auchenaiOnBoard, doubleDamage, spellDamage, currentMana, board.Opponent.Hero?.Health ?? 0, maximumSpellDamageMinionOnTheBoard, ref minimumOpponentHealth, ref entitiesPlayedToMinimumOpponentHealth);
-                        specialCaseForSpellPriestFound = true;
-                        int playerDamage = board.Player?.Damage ?? 0;
-                        if (minimumOpponentHealth <= playerDamage)
-                        {
-                            String cardsPlayed = (playerDamage) + " + " + (currentOpponentHealth - minimumOpponentHealth) + ":\n";
-                            foreach (Entity playedCard in entitiesPlayedToMinimumOpponentHealth)
-                            {
-                                if (!cardsPlayed.EndsWith(":\n"))
-                                    cardsPlayed += "+\n";
-                                cardsPlayed += playedCard.LocalizedName;
-                            }
-                            //cardsPlayed = "Found lethal: attack with all minions for " + playerDamage + " and then play\n" + cardsPlayed + " for " + (currentOpponentHealth - minimumOpponentHealth) + " damage";
-                            TextBlockPlayerAttack.Text = cardsPlayed;
-                            //TextBlockPlayerAttack.Height = System.Double.NaN;
-                            //TextBlockPlayerAttack.TextWrapping = TextWrapping.Wrap;
-                            //TextBlockPlayerAttack.MaxHeight = Double.PositiveInfinity;
-                            TextBlockPlayerAttack.FontSize = 7;
-                        }
-                        else
-                        {
-                            TextBlockPlayerAttack.Text = (minimumOpponentHealth - playerDamage).ToString();
-                            TextBlockPlayerAttack.FontSize = 21;
-                        }
-                    }
-                }
-                if (!specialCaseForSpellPriestFound)
-                {
-                    int damageToLethal = (board.Opponent.Hero?.Health ?? 0) - (board.Player?.Damage ?? 0);
-                    TextBlockPlayerAttack.Text = damageToLethal.ToString();
-                }
+                int damageToLethal = (board.Opponent.Hero?.Health ?? 0) - (board.Player?.Damage ?? 0);
+                TextBlockPlayerAttack.Text = damageToLethal.ToString();
+
                 TextBlockOpponentAttack.Text = board.Opponent.Damage.ToString();
 			}
 
@@ -555,9 +324,9 @@ namespace Hearthstone_Deck_Tracker.Windows
 			var atkFontMarginTop = (int)Math.Round(Height * 0.0038, 0);
 			IconBoardAttackPlayer.Width = atkWidth;
 			IconBoardAttackPlayer.Height = atkWidth;
-			//TextBlockPlayerAttack.Width = atkWidth;
-			//TextBlockPlayerAttack.Height = atkWidth;
-			//TextBlockPlayerAttack.FontSize = atkFont;
+			TextBlockPlayerAttack.Width = atkWidth;
+			TextBlockPlayerAttack.Height = atkWidth;
+			TextBlockPlayerAttack.FontSize = atkFont;
 			IconBoardAttackOpponent.Width = atkWidth;
 			IconBoardAttackOpponent.Height = atkWidth;
 			TextBlockOpponentAttack.Width = atkWidth;
